@@ -83,6 +83,12 @@ onMounted(scrollToBottom);
            <div class="vital-row"><span class="label">stamina</span> <span class="value yellow">{{ session.vitals.stamina }}/{{ session.vitals.maxStamina }}</span></div>
         </div>
       </div>
+      <div class="panel debug-panel">
+         <div class="panel-header">DEBUG LOG</div>
+         <div class="panel-content debug-list">
+            <div v-for="(log, i) in session.debugLog" :key="i" class="debug-line">{{ log }}</div>
+         </div>
+      </div>
     </div>
 
     <div class="main">
@@ -277,4 +283,24 @@ onMounted(scrollToBottom);
 :deep(.preset-death) { color: #cc6666; font-weight: bold; }
 :deep(.preset-bold) { font-weight: bold; color: white; }
 :deep(.preset-roomName) { color: #8abeb7; font-weight: bold; font-size: 1.1em; }
+
+.debug-panel {
+    flex: 1; /* Take remaining height */
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid #333;
+    margin-top: 10px;
+}
+.debug-list {
+    flex: 1;
+    overflow-y: auto;
+    font-size: 0.7em;
+    color: #666;
+    font-family: monospace;
+    white-space: pre-wrap;
+}
+.debug-line {
+    border-bottom: 1px solid #222;
+}
 </style>

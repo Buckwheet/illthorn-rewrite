@@ -33,6 +33,9 @@ export interface Session {
 	room: string[];
 	deaths: string[];
 
+	// Debugging
+	debugLog: string[];
+
 	vitals: Vitals;
 	parser: any; // Relaxed type to avoid struct/class mismatch issues during build
 }
@@ -98,6 +101,11 @@ export const useSessionStore = defineStore("session", () => {
 
 				// Handle Tags...
 				for (const tag of result.tags) {
+					if (tag.name !== ":text") {
+						session.debugLog.push(`Tag: <${tag.name} id='${tag.attributes["id"] || ""}'>`);
+						if (session.debugLog.length > 50) session.debugLog.shift();
+					}
+
 					if (tag.name === "progressBar") {
 						const id = tag.attributes["id"];
 						const value = Number(tag.attributes["value"]);
@@ -143,6 +151,7 @@ export const useSessionStore = defineStore("session", () => {
 				thoughts: [],
 				room: [],
 				deaths: [],
+				debugLog: [],
 				vitals: { ...defaultVitals }, // Clone defaults
 				parser: null, // Placeholder or remove field from interface
 			};
