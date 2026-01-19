@@ -9,11 +9,42 @@ const props = defineProps<{
 const store = useSessionStore();
 const commandInput = ref("");
 const feedContainer = ref<HTMLElement | null>(null);
+const commandHistory = ref<string[]>([]);
+const historyIndex = ref(-1);
 
 function send() {
 	if (!commandInput.value) return;
+    
+    // History
+    if (commandHistory.value.length === 0 || commandHistory.value[commandHistory.value.length - 1] !== commandInput.value) {
+        commandHistory.value.push(commandInput.value);
+    }
+    historyIndex.value = -1; // Reset
+    
 	store.sendCommand(commandInput.value);
 	commandInput.value = "";
+}
+
+function cycleHistory(direction: 'up' | 'down') {
+    if (commandHistory.value.length === 0) return;
+    
+    if (direction === 'up') {
+        if (historyIndex.value === -1) historyIndex.value = commandHistory.value.length - 1;
+        else if (historyIndex.value > 0) historyIndex.value--;
+    } else {
+        if (historyIndex.value !== -1) {
+            if (historyIndex.value < commandHistory.value.length - 1) historyIndex.value++;
+            else {
+                historyIndex.value = -1;
+                commandInput.value = "";
+                return;
+            }
+        }
+    }
+    
+    if (historyIndex.value !== -1) {
+        commandInput.value = commandHistory.value[historyIndex.value];
+    }
 }
 
 function scrollToBottom() {
@@ -74,9 +105,26 @@ onMounted(scrollToBottom);
             class="cli" 
             v-model="commandInput"
             @keyup.enter="send"
+            @keydown.up.prevent="cycleHistory('up')"
+            @keydown.down.prevent="cycleHistory('down')"
             autofocus
          />
       </div>
+    </div>
+
+    <div class="hud right-hud">
+        <div class="panel thoughts-panel">
+            <div class="panel-header">▼ THOUGHTS</div>
+            <div class="panel-content stream-content">
+                <div v-for="(line, i) in session.thoughts" :key="i" class="stream-line">{{ line }}</div>
+            </div>
+        </div>
+        <div class="panel deaths-panel">
+            <div class="panel-header">▼ DEATHS</div>
+            <div class="panel-content stream-content">
+                 <div v-for="(line, i) in session.deaths" :key="i" class="stream-line">{{ line }}</div>
+            </div>
+        </div>
     </div>
   </div>
 </template>
@@ -145,11 +193,31 @@ onMounted(scrollToBottom);
 .value.white { color: #fff; }
 .value.yellow { color: #fcc419; }
 
+.value.yellow { color: #fcc419; }
+
+.right-hud {
+  width: 250px; /* Same width as left hud */
+  border-left: 1px solid #333;
+  border-right: none;
+}
+
+.stream-content {
+    height: 150px;
+    overflow-y: auto;
+    font-size: 0.9em;
+    color: #aaa;
+}
+.stream-line {
+    border-bottom: 1px solid #222;
+    padding: 2px 0;
+}
+
 .main {
-  flex: 1;
+  flex: 1; /* Grow to fill space */
   display: flex;
   flex-direction: column;
   background: #000;
+  min-width: 0; /* Important for flex children to shrink */
 }
 
 .hands-bar {
@@ -203,4 +271,12 @@ onMounted(scrollToBottom);
     border-color: #00bc8c;
     outline: none;
 }
+
+/* Presets */
+:deep(.preset-speech) { color: #81a2be; font-weight: bold; }
+:deep(.preset-whisper) { color: #b294bb; font-style: italic; }
+:deep(.preset-thought) { color: #f0c674; font-style: italic; }
+:deep(.preset-death) { color: #cc6666; font-weight: bold; }
+:deep(.preset-bold) { font-weight: bold; color: white; }
+:deep(.preset-roomName) { color: #8abeb7; font-weight: bold; font-size: 1.1em; }
 </style>

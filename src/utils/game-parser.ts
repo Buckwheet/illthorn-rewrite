@@ -15,19 +15,14 @@ export class GameParser {
 		let cleanText = "";
 		const tags: GameTag[] = [];
 
-		// Simple regex-based parsing for now (robust enough for GSIV stream)
-		// We want to capture tags <...> and text content between them
+		let currentStream = "main"; // default
+
 		const parts = input.split(/(<[^>]+>)/g);
 
 		for (const part of parts) {
 			if (part.startsWith("<")) {
-				// It's a tag
 				const tagContent = part.substring(1, part.length - 1);
-
-				// Parse attributes
-				// <progressBar id='health' value='100'/>
-				// name: progressBar
-				// attrs: { id: health, value: 100 }
+				const isClose = tagContent.startsWith("/");
 
 				const cleanTag = tagContent.replace("/", "").trim();
 				const firstSpace = cleanTag.indexOf(" ");
@@ -40,8 +35,6 @@ export class GameParser {
 				}
 
 				const attributes: Record<string, string> = {};
-				// Regex for attributes: key='value' or key="value"
-				// This is a naive parser, assuming well-formed attributes
 				const attrRegex = /(\w+)=['"]([^'"]+)['"]/g;
 				let match = attrRegex.exec(attrString);
 				while (match !== null) {
@@ -49,17 +42,47 @@ export class GameParser {
 					match = attrRegex.exec(attrString);
 				}
 
-				tags.push({ name: tagName, attributes });
+				// Track Stream State
+				if (tagName === "stream") {
+					if (isClose) {
+						currentStream = "main";
+					} else {
+						currentStream = attributes["id"] || "main";
+					}
+				}
 
-				// Special handling: formatting tags might need to stay in text?
-				// For now, strip ALL tags from text view
-			} else if (part.trim().length > 0 || part.includes("\n")) {
-				// HTML Escape text
+				tags.push({ name: tagName, attributes, text: "" }); // Placeholder
+			} else if (part.length > 0) {
+				// Text Content
 				const escaped = part
 					.replace(/&/g, "&amp;")
 					.replace(/</g, "&lt;")
 					.replace(/>/g, "&gt;");
-				cleanText += escaped;
+
+				// Find if the previous tag was a valid style opener
+				let styleClass = "";
+				const lastTag = tags[tags.length - 1];
+				if (
+					lastTag &&
+					(lastTag.name === "preset" || lastTag.name === "style") &&
+					lastTag.attributes["id"]
+				) {
+					styleClass = lastTag.attributes["id"];
+				}
+
+				tags.push({
+					name: ":text",
+					attributes: { stream: currentStream, style: styleClass },
+					text: escaped,
+				});
+
+				if (currentStream === "main") {
+					if (styleClass) {
+						cleanText += `<span class="preset-${styleClass}">${escaped}</span>`;
+					} else {
+						cleanText += escaped;
+					}
+				}
 			}
 		}
 

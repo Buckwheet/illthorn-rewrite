@@ -28,6 +28,11 @@ export interface Session {
 	host: string;
 	port: number;
 	feed: string[];
+	// Streams
+	thoughts: string[];
+	room: string[];
+	deaths: string[];
+
 	vitals: Vitals;
 }
 
@@ -63,25 +68,39 @@ export const useSessionStore = defineStore("session", () => {
 
 			// Append clean text to feed
 			if (result.cleanText) {
-				session.feed.push(result.cleanText);
+				// Only push to main feed if it's NOT a dedicated stream?
+				// The parser now filters cleanText to only include 'main'.
+				// But we need to handle the segments.
+				if (result.cleanText.trim()) session.feed.push(result.cleanText);
 			}
 
-			// Handle tags for Vitals
-			// <progressBar id='health' value='103'/>
+			// Handle Segments (Streams)
 			for (const tag of result.tags) {
-				if (tag.name === "progressBar") {
-					const id = tag.attributes["id"];
-					const value = Number(tag.attributes["value"]);
-					// We need a way to know MAX, usually it comes differently or we just infer/store it.
-					// For now, let's just update the current value.
-					// Legacy Illthorn likely updates these based on mapping.
+				if (tag.name === ":text" && tag.attributes) {
+					const stream = tag.attributes["stream"];
+					const text = tag.text || "";
+					if (!text.trim()) continue;
 
-					if (id === "health") session.vitals.health = value;
-					if (id === "mana") session.vitals.mana = value;
-					if (id === "spirit") session.vitals.spirit = value;
-					if (id === "stamina") session.vitals.stamina = value;
-					// Note: max values are typically static or sent in different tags.
-					// For this iteration, we just show value.
+					if (stream === "thoughts") session.thoughts.push(text);
+					if (stream === "room") session.room.push(text);
+					if (stream === "death") session.deaths.push(text);
+				}
+
+				// Handle Tags...
+				// <progressBar id='health' value='103'/>
+				for (const tag of result.tags) {
+					if (tag.name === "progressBar") {
+						const id = tag.attributes["id"];
+						const value = Number(tag.attributes["value"]);
+						// We need a way to know MAX, usually it comes differently or we just infer/store it.
+						// For now, let's just update the current value.
+						// Legacy Illthorn likely updates these based on mapping.
+
+						if (id === "health") session.vitals.health = value;
+						if (id === "mana") session.vitals.mana = value;
+						if (id === "spirit") session.vitals.spirit = value;
+						if (id === "stamina") session.vitals.stamina = value;
+					}
 				}
 			}
 		}
@@ -97,6 +116,9 @@ export const useSessionStore = defineStore("session", () => {
 				host: config.host,
 				port: config.port,
 				feed: [],
+				thoughts: [],
+				room: [],
+				deaths: [],
 				vitals: { ...defaultVitals }, // Clone defaults
 			};
 
