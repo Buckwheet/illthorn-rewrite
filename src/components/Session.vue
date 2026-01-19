@@ -93,9 +93,7 @@ onMounted(scrollToBottom);
       </div>
 
       <div class="feed" ref="feedContainer">
-        <div v-for="(line, index) in session.feed" :key="index" class="feed-line">
-            {{ line }}
-        </div>
+        <div v-for="(line, index) in session.feed" :key="index" class="feed-line" v-html="line"></div>
       </div>
 
       <div class="cli-wrapper">

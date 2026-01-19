@@ -49,8 +49,12 @@ const defaultVitals: Vitals = {
 };
 
 export const useSessionStore = defineStore("session", () => {
+	// Reactive state for UI
 	const sessions = ref<Map<string, Session>>(new Map());
 	const currentSessionId = ref<string | null>(null);
+
+	// Non-reactive state for logic (Parsers)
+	const parsers = new Map<string, GameParser>();
 
 	const currentSession = computed(() => {
 		if (currentSessionId.value && sessions.value.has(currentSessionId.value)) {
@@ -63,15 +67,20 @@ export const useSessionStore = defineStore("session", () => {
 	listen<{ session: string; data: string }>("session-data", (event) => {
 		const { session: sessionName, data } = event.payload;
 		const session = sessions.value.get(sessionName);
-		if (session) {
-			// Parse the data using session's stateful parser
-			const result = session.parser.parse(data);
+		let parser = parsers.get(sessionName);
+
+		// Ensure parser exists (robustness)
+		if (!parser) {
+			parser = new GameParser();
+			parsers.set(sessionName, parser);
+		}
+
+		if (session && parser) {
+			// Parse the data using raw parser instance
+			const result = parser.parse(data);
 
 			// Append clean text to feed
 			if (result.cleanText) {
-				// Only push to main feed if it's NOT a dedicated stream?
-				// The parser now filters cleanText to only include 'main'.
-				// But we need to handle the segments.
 				if (result.cleanText.trim()) session.feed.push(result.cleanText);
 			}
 
@@ -88,15 +97,10 @@ export const useSessionStore = defineStore("session", () => {
 				}
 
 				// Handle Tags...
-				// <progressBar id='health' value='103'/>
 				for (const tag of result.tags) {
 					if (tag.name === "progressBar") {
 						const id = tag.attributes["id"];
 						const value = Number(tag.attributes["value"]);
-						// We need a way to know MAX, usually it comes differently or we just infer/store it.
-						// For now, let's just update the current value.
-						// Legacy Illthorn likely updates these based on mapping.
-
 						if (id === "health") session.vitals.health = value;
 						if (id === "mana") session.vitals.mana = value;
 						if (id === "spirit") session.vitals.spirit = value;
@@ -112,6 +116,9 @@ export const useSessionStore = defineStore("session", () => {
 			console.log("Connecting to session:", config.name);
 			await invoke("connect_session", { config });
 
+			// Initialize Parser
+			parsers.set(config.name, new GameParser());
+
 			const newSession: Session = {
 				name: config.name,
 				host: config.host,
@@ -121,7 +128,7 @@ export const useSessionStore = defineStore("session", () => {
 				room: [],
 				deaths: [],
 				vitals: { ...defaultVitals }, // Clone defaults
-				parser: new GameParser(),
+				parser: null, // Placeholder or remove field from interface
 			};
 
 			sessions.value.set(config.name, newSession);
@@ -150,6 +157,7 @@ export const useSessionStore = defineStore("session", () => {
 		try {
 			await invoke("disconnect_session", { name });
 			sessions.value.delete(name);
+			parsers.delete(name);
 			if (currentSessionId.value === name) {
 				currentSessionId.value = null;
 			}
