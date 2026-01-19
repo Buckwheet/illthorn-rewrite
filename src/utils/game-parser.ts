@@ -11,81 +11,152 @@ export interface ParseResult {
 }
 
 export class GameParser {
-	static parse(input: string): ParseResult {
+	private buffer: string = "";
+	private currentStream: string = "main";
+
+	parse(input: string): ParseResult {
+		this.buffer += input;
+
 		let cleanText = "";
 		const tags: GameTag[] = [];
 
-		let currentStream = "main"; // default
+		// Loop to find tags
+		while (true) {
+			// Find next tag start
+			const tagStart = this.buffer.indexOf("<");
+			if (tagStart === -1) {
+				// No tags remaining.
+				// If the buffer HAS content, and NO '<', it is pure text. Process it.
+				if (this.buffer.length > 0) {
+					const text = this.buffer;
 
-		const parts = input.split(/(<[^>]+>)/g);
-
-		for (const part of parts) {
-			if (part.startsWith("<")) {
-				const tagContent = part.substring(1, part.length - 1);
-				const isClose = tagContent.startsWith("/");
-
-				const cleanTag = tagContent.replace("/", "").trim();
-				const firstSpace = cleanTag.indexOf(" ");
-				let tagName = cleanTag;
-				let attrString = "";
-
-				if (firstSpace !== -1) {
-					tagName = cleanTag.substring(0, firstSpace);
-					attrString = cleanTag.substring(firstSpace + 1);
-				}
-
-				const attributes: Record<string, string> = {};
-				const attrRegex = /(\w+)=['"]([^'"]+)['"]/g;
-				let match = attrRegex.exec(attrString);
-				while (match !== null) {
-					attributes[match[1]] = match[2];
-					match = attrRegex.exec(attrString);
-				}
-
-				// Track Stream State
-				if (tagName === "stream") {
-					if (isClose) {
-						currentStream = "main";
-					} else {
-						currentStream = attributes["id"] || "main";
+					let styleClass = "";
+					const prevTag = tags[tags.length - 1];
+					if (
+						prevTag &&
+						(prevTag.name === "preset" || prevTag.name === "style") &&
+						prevTag.attributes["id"]
+					) {
+						styleClass = prevTag.attributes["id"];
 					}
+
+					this.processText(text, tags, this.currentStream);
+					cleanText += this.textToClean(text, this.currentStream, styleClass);
+					this.buffer = "";
 				}
-
-				tags.push({ name: tagName, attributes, text: "" }); // Placeholder
-			} else if (part.length > 0) {
-				// Text Content
-				const escaped = part
-					.replace(/&/g, "&amp;")
-					.replace(/</g, "&lt;")
-					.replace(/>/g, "&gt;");
-
-				// Find if the previous tag was a valid style opener
-				let styleClass = "";
-				const lastTag = tags[tags.length - 1];
-				if (
-					lastTag &&
-					(lastTag.name === "preset" || lastTag.name === "style") &&
-					lastTag.attributes["id"]
-				) {
-					styleClass = lastTag.attributes["id"];
-				}
-
-				tags.push({
-					name: ":text",
-					attributes: { stream: currentStream, style: styleClass },
-					text: escaped,
-				});
-
-				if (currentStream === "main") {
-					if (styleClass) {
-						cleanText += `<span class="preset-${styleClass}">${escaped}</span>`;
-					} else {
-						cleanText += escaped;
-					}
-				}
+				break;
 			}
+
+			// We have a '<'. Is there text before it?
+			if (tagStart > 0) {
+				const text = this.buffer.substring(0, tagStart);
+
+				let styleClass = "";
+				const prevTag = tags[tags.length - 1];
+				if (
+					prevTag &&
+					(prevTag.name === "preset" || prevTag.name === "style") &&
+					prevTag.attributes["id"]
+				) {
+					styleClass = prevTag.attributes["id"];
+				}
+
+				this.processText(text, tags, this.currentStream);
+				cleanText += this.textToClean(text, this.currentStream, styleClass);
+				this.buffer = this.buffer.substring(tagStart);
+				continue; // Loop again, now buffer starts with '<'
+			}
+
+			// Buffer starts with '<'. Find closing '>'.
+			const tagEnd = this.buffer.indexOf(">");
+			if (tagEnd === -1) {
+				// Incomplete tag. Stop processing and wait for next chunk.
+				break;
+			}
+
+			// We have a complete tag <...>
+			const fullTag = this.buffer.substring(0, tagEnd + 1);
+			this.buffer = this.buffer.substring(tagEnd + 1);
+
+			this.processTag(fullTag, tags);
 		}
 
 		return { cleanText, tags };
+	}
+
+	private processText(content: string, tags: GameTag[], stream: string) {
+		const escaped = content
+			.replace(/&/g, "&amp;")
+			.replace(/</g, "&lt;")
+			.replace(/>/g, "&gt;");
+
+		// Check for active style from last tag (redundant check if caller does it, but useful for tagging :text)
+		let styleClass = "";
+		const lastTag = tags[tags.length - 1];
+		if (
+			lastTag &&
+			(lastTag.name === "preset" || lastTag.name === "style") &&
+			lastTag.attributes["id"] &&
+			!lastTag.text
+		) {
+			styleClass = lastTag.attributes["id"];
+		}
+
+		tags.push({
+			name: ":text",
+			attributes: { stream, style: styleClass },
+			text: escaped,
+		});
+	}
+
+	private textToClean(
+		content: string,
+		stream: string,
+		styleClass: string,
+	): string {
+		if (stream !== "main") return "";
+		const escaped = content
+			.replace(/&/g, "&amp;")
+			.replace(/</g, "&lt;")
+			.replace(/>/g, "&gt;");
+
+		if (styleClass) {
+			return `<span class="preset-${styleClass}">${escaped}</span>`;
+		}
+		return escaped;
+	}
+
+	private processTag(fullTag: string, tags: GameTag[]) {
+		const tagContent = fullTag.substring(1, fullTag.length - 1);
+		const isClose = tagContent.startsWith("/");
+		const cleanTag = tagContent.replace("/", "").trim();
+		const firstSpace = cleanTag.indexOf(" ");
+
+		let tagName = cleanTag;
+		let attrString = "";
+
+		if (firstSpace !== -1) {
+			tagName = cleanTag.substring(0, firstSpace);
+			attrString = cleanTag.substring(firstSpace + 1);
+		}
+
+		const attributes: Record<string, string> = {};
+		const attrRegex = /(\w+)=['"]([^'"]+)['"]/g;
+		let match = attrRegex.exec(attrString);
+		while (match !== null) {
+			attributes[match[1]] = match[2];
+			match = attrRegex.exec(attrString);
+		}
+
+		// Handle State Logic (Streams)
+		if (tagName === "stream") {
+			if (isClose) {
+				this.currentStream = "main";
+			} else {
+				this.currentStream = attributes["id"] || "main";
+			}
+		}
+
+		tags.push({ name: tagName, attributes, text: "" });
 	}
 }

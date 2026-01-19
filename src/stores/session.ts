@@ -34,6 +34,7 @@ export interface Session {
 	deaths: string[];
 
 	vitals: Vitals;
+	parser: any; // Relaxed type to avoid struct/class mismatch issues during build
 }
 
 const defaultVitals: Vitals = {
@@ -63,8 +64,8 @@ export const useSessionStore = defineStore("session", () => {
 		const { session: sessionName, data } = event.payload;
 		const session = sessions.value.get(sessionName);
 		if (session) {
-			// Parse the data
-			const result = GameParser.parse(data);
+			// Parse the data using session's stateful parser
+			const result = session.parser.parse(data);
 
 			// Append clean text to feed
 			if (result.cleanText) {
@@ -120,6 +121,7 @@ export const useSessionStore = defineStore("session", () => {
 				room: [],
 				deaths: [],
 				vitals: { ...defaultVitals }, // Clone defaults
+				parser: new GameParser(),
 			};
 
 			sessions.value.set(config.name, newSession);
