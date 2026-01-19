@@ -114,7 +114,8 @@ export class GameParser {
 		stream: string,
 		styleClass: string,
 	): string {
-		if (stream !== "main") return "";
+		// Allow 'main' AND 'room' streams to appear in clean text (Main Feed)
+		if (stream !== "main" && stream !== "room") return "";
 		const escaped = content
 			.replace(/&/g, "&amp;")
 			.replace(/</g, "&lt;")

@@ -101,10 +101,26 @@ export const useSessionStore = defineStore("session", () => {
 					if (tag.name === "progressBar") {
 						const id = tag.attributes["id"];
 						const value = Number(tag.attributes["value"]);
+						const text = tag.attributes["text"];
+
 						if (id === "health") session.vitals.health = value;
 						if (id === "mana") session.vitals.mana = value;
 						if (id === "spirit") session.vitals.spirit = value;
 						if (id === "stamina") session.vitals.stamina = value;
+
+						// Parse Max from text if available
+						if (text) {
+							const match = text.match(/(\d+)\/(\d+)/);
+							if (match) {
+								const current = Number(match[1]);
+								const max = Number(match[2]);
+
+								if (id === "health") { session.vitals.health = current; session.vitals.maxHealth = max; }
+								if (id === "mana") { session.vitals.mana = current; session.vitals.maxMana = max; }
+								if (id === "spirit") { session.vitals.spirit = current; session.vitals.maxSpirit = max; }
+								if (id === "stamina") { session.vitals.stamina = current; session.vitals.maxStamina = max; }
+							}
+						}
 					}
 				}
 			}

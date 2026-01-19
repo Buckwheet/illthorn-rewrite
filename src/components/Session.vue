@@ -77,10 +77,10 @@ onMounted(scrollToBottom);
       <div class="panel vitals-panel">
         <div class="panel-header">▼ VITALS</div>
         <div class="panel-content vitals-list">
-           <div class="vital-row"><span class="label">health</span> <span class="value red">{{ session.vitals.health }}/{{ session.vitals.health }}</span></div>
-           <div class="vital-row"><span class="label">mana</span> <span class="value blue">{{ session.vitals.mana }}/{{ session.vitals.mana }}</span></div>
-           <div class="vital-row"><span class="label">spirit</span> <span class="value white">{{ session.vitals.spirit }}/{{ session.vitals.spirit }}</span></div>
-           <div class="vital-row"><span class="label">stamina</span> <span class="value yellow">{{ session.vitals.stamina }}/{{ session.vitals.stamina }}</span></div>
+           <div class="vital-row"><span class="label">health</span> <span class="value red">{{ session.vitals.health }}/{{ session.vitals.maxHealth }}</span></div>
+           <div class="vital-row"><span class="label">mana</span> <span class="value blue">{{ session.vitals.mana }}/{{ session.vitals.maxMana }}</span></div>
+           <div class="vital-row"><span class="label">spirit</span> <span class="value white">{{ session.vitals.spirit }}/{{ session.vitals.maxSpirit }}</span></div>
+           <div class="vital-row"><span class="label">stamina</span> <span class="value yellow">{{ session.vitals.stamina }}/{{ session.vitals.maxStamina }}</span></div>
         </div>
       </div>
     </div>
