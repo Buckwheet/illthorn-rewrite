@@ -1,10 +1,11 @@
 <script setup lang="ts">
+// biome-ignore lint/correctness/noUnusedImports: Used in template
 import { computed } from "vue";
-import { useSessionStore, type Session } from "../stores/session";
+import { type Session, useSessionStore } from "../stores/session";
 
 const props = defineProps<{
-  session: Session;
-  index: number;
+	session: Session;
+	index: number;
 }>();
 
 const store = useSessionStore();
@@ -12,7 +13,7 @@ const store = useSessionStore();
 const isActive = computed(() => store.currentSessionId === props.session.name);
 
 function activate() {
-  store.currentSessionId = props.session.name;
+	store.currentSessionId = props.session.name;
 }
 </script>
 

@@ -1,13 +1,40 @@
 <script setup lang="ts">
-import { useSessionStore } from "./stores/session";
-import SessionButton from "./components/SessionButton.vue";
+import { ref } from "vue";
+import ConnectionModal from "./components/ConnectionModal.vue";
 import SessionView from "./components/Session.vue";
+import SessionButton from "./components/SessionButton.vue";
+import { useSessionStore } from "./stores/session";
 
 const sessionStore = useSessionStore();
+const showConnectionModal = ref(false);
+
+import { onMounted } from "vue";
+
+onMounted(() => {
+	sessionStore.scanAndConnect();
+});
+
+function handleConnect(config: { name: string; host: string; port: number }) {
+	sessionStore
+		.connect(config)
+		.then(() => {
+			showConnectionModal.value = false;
+		})
+		.catch((err) => {
+			console.error("Connection failed", err);
+			// TODO: Show error in modal
+		});
+}
 </script>
 
 <template>
   <div id="app-container">
+    <ConnectionModal 
+      v-if="showConnectionModal" 
+      @connect="handleConnect" 
+      @cancel="showConnectionModal = false" 
+    />
+
     <div id="app-left-pane">
       <div id="actions">
         <h3>Sessions</h3>
@@ -19,7 +46,7 @@ const sessionStore = useSessionStore();
               :index="index" 
             />
          </div>
-         <button class="add-session" @click="sessionStore.connect({name: 'test', port: 1234})">+</button>
+         <button class="add-session" @click="showConnectionModal = true">+</button>
       </div>
     </div>
     
@@ -36,6 +63,17 @@ const sessionStore = useSessionStore();
     </div>
   </div>
 </template>
+
+<style>
+/* Global Styles */
+body {
+    background-color: #000;
+    color: #ccc;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    overflow: hidden;
+}
+</style>
 
 <style scoped>
 /* Scoped styles for the app shell */

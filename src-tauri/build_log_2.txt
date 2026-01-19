@@ -1,0 +1,35 @@
+    Checking tauri-appillthorn-rewrite v0.1.0 (C:\Users\rpgfi\Documents\GSIV Development\Ilthorn-rewrite\src-tauri)
+error: future cannot be sent between threads safely
+   --> src\lib.rs:38:1
+    |
+ 38 |   #[tauri::command]
+    |   ^^^^^^^^^^^^^^^^^ future returned by `send_command` is not `Send`
+...
+ 69 |           .invoke_handler(tauri::generate_handler![
+    |  _________________________-
+ 70 | |             connect_session,
+ 71 | |             send_command,
+ 72 | |             disconnect_session
+ 73 | |         ])
+    | |_________- in this macro invocation
+    |
+    = help: within `impl Future<Output = Result<(), std::string::String>>`, the trait `Send` is not implemented for `std::sync::MutexGuard<'_, HashMap<std::string::String, session::Session>>`
+note: future is not `Send` as this value is used across an await
+   --> src\lib.rs:47:28
+    |
+ 44 |     let sessions = state.0.lock().map_err(|e| e.to_string())?;
+    |         -------- has type `std::sync::MutexGuard<'_, HashMap<std::string::String, session::Session>>` which is not `Send`
+...
+ 47 |         sess.send(command).await?;
+    |                            ^^^^^ await occurs here, with `sessions` maybe used later
+note: required by a bound in `ResultFutureTag::future`
+   --> C:\Users\rpgfi\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\tauri-2.9.5\src\ipc\command.rs:314:42
+    |
+310 |     pub async fn future<T, E, F>(self, value: F) -> Result<InvokeResponseBody, InvokeError>
+    |                  ------ required by a bound in this associated function
+...
+314 |       F: Future<Output = Result<T, E>> + Send,
+    |                                          ^^^^ required by this bound in `ResultFutureTag::future`
+    = note: this error originates in the macro `__cmd__send_command` which comes from the expansion of the macro `tauri::generate_handler` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error: could not compile `tauri-appillthorn-rewrite` (lib) due to 2 previous errors

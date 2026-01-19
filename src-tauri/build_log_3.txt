@@ -1,0 +1,14 @@
+    Checking tauri-appillthorn-rewrite v0.1.0 (C:\Users\rpgfi\Documents\GSIV Development\Ilthorn-rewrite\src-tauri)
+warning: field `config` is never read
+  --> src\session.rs:16:9
+   |
+15 | pub struct Session {
+   |            ------- field in this struct
+16 |     pub config: SessionConfig,
+   |         ^^^^^^
+   |
+   = note: `Session` has a derived impl for the trait `Clone`, but this is intentionally ignored during dead code analysis
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `tauri-appillthorn-rewrite` (lib) generated 1 warning
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.05s
