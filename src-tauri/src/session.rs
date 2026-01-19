@@ -60,8 +60,10 @@ impl Session {
 
     pub async fn send(&self, command: String) -> Result<(), String> {
         let mut writer = self.writer.lock().await;
+        // Append \r\n to ensure the server/Lich detects the end of the command
+        let data = format!("{}\r\n", command);
         writer
-            .write_all(command.as_bytes())
+            .write_all(data.as_bytes())
             .await
             .map_err(|e| e.to_string())?;
         writer.flush().await.map_err(|e| e.to_string())?;
