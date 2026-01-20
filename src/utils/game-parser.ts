@@ -130,7 +130,18 @@ export class GameParser {
 	private processTag(fullTag: string, tags: GameTag[]) {
 		const tagContent = fullTag.substring(1, fullTag.length - 1);
 		const isClose = tagContent.startsWith("/");
-		const cleanTag = tagContent.replace("/", "").trim();
+
+		// Remove leading slash if closing tag </tag>
+		let rawContent = tagContent;
+		if (isClose) {
+			rawContent = rawContent.substring(1);
+		}
+		// Remove trailing slash if self-closing <tag />
+		if (rawContent.endsWith("/")) {
+			rawContent = rawContent.substring(0, rawContent.length - 1);
+		}
+
+		const cleanTag = rawContent.trim();
 		const firstSpace = cleanTag.indexOf(" ");
 
 		let tagName = cleanTag;
