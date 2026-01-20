@@ -8,6 +8,8 @@ import { useSessionStore } from "./stores/session";
 const sessionStore = useSessionStore();
 const showConnectionModal = ref(false);
 const lastError = ref<any>(null);
+const contextRef = ref<HTMLElement | null>(null);
+const contextDims = ref({ w: 0, h: 0 });
 
 onErrorCaptured((err, _instance, info) => {
     console.error("Captured Error:", err);
@@ -15,9 +17,19 @@ onErrorCaptured((err, _instance, info) => {
     return false;
 });
 
+function updateDims() {
+    if (contextRef.value) {
+        contextDims.value = {
+            w: contextRef.value.offsetWidth,
+            h: contextRef.value.offsetHeight
+        };
+    }
+}
+
 onMounted(() => {
 	sessionStore.scanAndConnect();
     window.addEventListener("keydown", handleGlobalKey);
+    setInterval(updateDims, 1000);
 });
 
 onUnmounted(() => {
@@ -92,15 +104,21 @@ function handleConnect(config: { name: string; host: string; port: number }) {
           <div>CurrentID: {{ sessionStore.currentSessionId || 'NULL' }}</div>
           <div>Session Count: {{ sessionStore.sessions.size }}</div>
           <div>Active Found: {{ !!sessionStore.currentSession }}</div>
+          <div>Context Dims: {{ contextDims.w }}x{{ contextDims.h }}</div>
           <div style="color: red; font-weight: bold;">ERROR: {{ lastError || 'None' }}</div>
       </div>
 
-      <div id="current-context">
+      <div id="current-context" ref="contextRef">
         <div v-if="!sessionStore.currentSession" class="empty-state">
           <p>No active session. Connect to start.</p>
         </div>
         <!-- Yellow Wrapper to check slot -->
-        <div v-else style="border: 2px dashed yellow; height: 100%; width: 100%; display: flex; flex-direction: column;">
+        <div v-else style="border: 2px dashed yellow; flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+            <!-- WHITE BOX TEST -->
+            <div style="background: white; color: black; padding: 20px; font-weight: bold;">
+                IF YOU SEE THIS, CONTAINER IS VALID.
+            </div>
+            
             <SessionView :session="sessionStore.currentSession" />
         </div>
       </div>
