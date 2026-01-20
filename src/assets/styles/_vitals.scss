@@ -1,39 +1,59 @@
-illthorn-vitals, illthorn-effects {
+.vitals-panel {
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  border-bottom: 1px solid #333;
 }
 
-illthorn-progress-bar {
-  text-align: center;
-  padding: 0.5em;
-  position: relative;
+.vitals-list {
+  padding: 5px;
+  background: #111;
+}
 
-  .flavor-text {
-    text-align: right;
-  }
+.vital-row {
+  display: flex;
+  justify-content: space-between;
+  font-family: monospace;
+  font-size: 14px;
+  line-height: 1.4;
+  padding: 0 5px;
+}
 
-  .meter {
-    position: absolute;
-    height: 100%;
-    top: 0;
-    left: 0;
-  }
+.vital-row .label {
+  color: #888;
+  font-weight: bold;
+}
 
-  span {
-    z-index: 1;
-    position: relative;
-  }
+.vital-row .value {
+  font-weight: bold;
+}
 
-  &.high .meter {
-    background-color: var(--ok);
-  }
+/* Colors matching GSIV StormFront defaults roughly */
+.vital-row .value.red {
+  color: #ff5555;
+}
 
-  &.medium .meter {
-    background-color: var(--warn);
-  }
+.vital-row .value.blue {
+  color: #5555ff;
+}
 
-  &.low {
-    background-color: var(--danger);
-    font-weight: bold;
-  }
+.vital-row .value.white {
+  color: #eeeeee;
+}
+
+.vital-row .value.yellow {
+  color: #ffff55;
+}
+
+.vital-row .value.green {
+  color: #55ff55;
+}
+
+/* Stance / Mind styling */
+.vital-row .value.stance {
+  color: #88ff88;
+}
+
+.vital-row .value.mind {
+  color: #8888ff;
 }

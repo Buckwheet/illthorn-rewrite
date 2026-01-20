@@ -15,6 +15,21 @@ export interface Vitals {
 	maxSpirit: number;
 	stamina: number;
 	maxStamina: number;
+	// New Fields
+	encumbrance: number; // 0-100 probably
+	encumbranceText: string;
+	mindState: number;
+	mindText: string;
+	stance: number;
+	stanceText: string;
+	nextLevel: number;
+	nextLevelText: string;
+}
+
+export interface Hands {
+	left: string;
+	right: string;
+	spell: string;
 }
 
 export interface SessionConfig {
@@ -38,6 +53,7 @@ export interface Session {
 	debugLog: string[];
 
 	vitals: Vitals;
+	hands: Hands;
 	parser: any; // Relaxed type to avoid struct/class mismatch issues during build
 }
 
@@ -50,6 +66,20 @@ const defaultVitals: Vitals = {
 	maxSpirit: 0,
 	stamina: 0,
 	maxStamina: 0,
+	encumbrance: 0,
+	encumbranceText: "None",
+	mindState: 0,
+	mindText: "Clear",
+	stance: 0,
+	stanceText: "Offensive",
+	nextLevel: 0,
+	nextLevelText: "",
+};
+
+const defaultHands: Hands = {
+	left: "Empty",
+	right: "Empty",
+	spell: "None"
 };
 
 export const useSessionStore = defineStore("session", () => {
@@ -147,10 +177,26 @@ export const useSessionStore = defineStore("session", () => {
 								if (id === "spirit") { session.vitals.spirit = current; session.vitals.maxSpirit = max; }
 								if (id === "stamina") { session.vitals.stamina = current; session.vitals.maxStamina = max; }
 							} else {
+								// Default Handling for non-max bars (Mind, Encumbrance, Stance)
+								if (id === "encumlevel") { session.vitals.encumbrance = value; session.vitals.encumbranceText = text; }
+								if (id === "mindState") { session.vitals.mindState = value; session.vitals.mindText = text; }
+								if (id === "stance") { session.vitals.stance = value; session.vitals.stanceText = text; }
+								if (id === "nextLevel") { session.vitals.nextLevel = value; session.vitals.nextLevelText = text; }
 								// Log failure
-								session.debugLog.push(`Vitals Fail: ${id} text='${text}'`);
+								// session.debugLog.push(`Vitals Fail: ${id} text='${text}'`);
 							}
 						}
+					}
+
+					// Hands Handling
+					if (tag.name === "left") {
+						session.hands.left = tag.text || "Empty";
+					}
+					if (tag.name === "right") {
+						session.hands.right = tag.text || "Empty";
+					}
+					if (tag.name === "spell") {
+						session.hands.spell = tag.text || "None";
 					}
 				}
 			}
@@ -183,6 +229,7 @@ export const useSessionStore = defineStore("session", () => {
 				debugLog: [],
 				exits: [],
 				vitals: { ...defaultVitals }, // Clone defaults
+				hands: { ...defaultHands },
 				parser: null, // Placeholder or remove field from interface
 			};
 

@@ -93,7 +93,26 @@ watch(() => props.session.feed.length, scrollToBottom);
            <div class="vital-row"><span class="label">mana</span> <span class="value blue">{{ session.vitals.mana }}/{{ session.vitals.maxMana }}</span></div>
            <div class="vital-row"><span class="label">spirit</span> <span class="value white">{{ session.vitals.spirit }}/{{ session.vitals.maxSpirit }}</span></div>
            <div class="vital-row"><span class="label">stamina</span> <span class="value yellow">{{ session.vitals.stamina }}/{{ session.vitals.maxStamina }}</span></div>
+           <!-- Extended Vitals -->
+           <div class="vital-row"><span class="label">encumbrance</span> <span class="value white">{{ session.vitals.encumbranceText }}</span></div>
+           <div class="vital-row"><span class="label">stance</span> <span class="value stance">{{ session.vitals.stanceText }}</span></div>
+           <div class="vital-row"><span class="label">mind</span> <span class="value mind">{{ session.vitals.mindText }}</span></div>
+           <div class="vital-row" v-if="session.vitals.nextLevelText"><span class="label">next level</span> <span class="value yellow">{{ session.vitals.nextLevelText }}</span></div>
         </div>
+      </div>
+      
+      <!-- New Panels (Placeholders until parsing added) -->
+      <div class="panel spells-panel">
+         <div class="panel-header">▼ ACTIVE SPELLS</div>
+         <div class="panel-content"><div class="empty-msg">None</div></div>
+      </div>
+      <div class="panel buffs-panel">
+         <div class="panel-header">▼ BUFFS</div>
+         <div class="panel-content"><div class="empty-msg">None</div></div>
+      </div>
+      <div class="panel debuffs-panel">
+         <div class="panel-header">▼ DEBUFFS</div>
+         <div class="panel-content"><div class="empty-msg">None</div></div>
       </div>
       <div class="panel debug-panel">
          <div class="panel-header">DEBUG LOG</div>
@@ -105,9 +124,9 @@ watch(() => props.session.feed.length, scrollToBottom);
 
     <div class="main">
       <div class="hands-bar">
-        <div class="hand-slot left"><span class="icon">✋</span> Empty</div>
-        <div class="hand-slot right"><span class="icon">✋</span> Empty</div>
-        <div class="hand-slot spell"><span class="icon">✨</span> None</div>
+        <div class="hand-slot left"><span class="icon">✋</span> {{ session.hands.left }}</div>
+        <div class="hand-slot right"><span class="icon">✋</span> {{ session.hands.right }}</div>
+        <div class="hand-slot spell"><span class="icon">✨</span> {{ session.hands.spell }}</div>
       </div>
 
       <!-- Streams Row (Thoughts/Deaths) Matches Original Layout -->

@@ -1,41 +1,56 @@
-illthorn-room {
+.compass-area {
+  padding: 10px;
+  background: #111;
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  text-align: center;
-  // todo: make this purdy
-  span {
-    flex: 1;
-  }
+  justify-content: center;
 }
 
-illthorn-compass {
+.compass-box {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 30px 30px 30px;
+  grid-template-rows: 30px 30px 30px;
+  gap: 2px;
+}
+
+.dir {
+  display: flex;
   align-items: center;
-  align-content: center;
-  text-align: center;
-  width: 90px;
-  height: 150px;
-  margin: 0 auto;
-  a {
-    height: 30px;
-    width: 30px;
-    padding: 0;
-    line-height: 30px;
-    align-content: center;
-    justify-content: center;
-    background: var(--info);
-    opacity: 0.2;
+  justify-content: center;
+  background: #222;
+  color: #444;
+  font-size: 10px;
+  font-family: monospace;
+  text-transform: uppercase;
+  cursor: default;
+  user-select: none;
+}
 
-    &.on {
-      background: var(--ok);
-      color: var(--info, #f1f1ff);
-      opacity: 1;
-    }
+.dir.active {
+  background: #4444ff;
+  /* Blue for active valid exit */
+  color: white;
+  font-weight: bold;
+}
 
-    &:empty {
-      visibility: hidden;
-    }
-  }
+/* Specific Placements if using Grid Areas, but standard flow works for 3x3 */
+/* nw n ne
+   w out e
+   sw s se 
+*/
+/* Note: Session.vue order: 
+   nw, n, ne, 
+   w, out, e, 
+   sw, s, se 
+   This matches 3x3 grid order. Perfect.
+*/
+
+.dir.out {
+  font-size: 9px;
+  color: #666;
+}
+
+.dir.out.active {
+  background: #448844;
+  /* Greenish for Out? Or just match others */
+  background: #4444ff;
 }
