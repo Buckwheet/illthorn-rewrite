@@ -66,15 +66,21 @@ onMounted(scrollToBottom);
         <div class="panel-header">▼ ROOM</div>
         <div class="panel-content compass-area">
           <div class="compass-box">
-             <!-- Simplified Compass Mockup -->
-             <div class="dir nw">nw</div> <div class="dir n">n</div> <div class="dir ne">ne</div>
-             <div class="dir w">w</div>   <div class="dir out">Out</div>   <div class="dir e">e</div>
-             <div class="dir sw">sw</div> <div class="dir s">s</div> <div class="dir se">se</div>
+             <!-- Compass with Logic -->
+             <div class="dir nw" :class="{ active: session.exits.includes('nw') }">nw</div> 
+             <div class="dir n" :class="{ active: session.exits.includes('n') }">n</div> 
+             <div class="dir ne" :class="{ active: session.exits.includes('ne') }">ne</div>
+             <div class="dir w" :class="{ active: session.exits.includes('w') }">w</div>   
+             <div class="dir out" :class="{ active: session.exits.includes('out') }">Out</div>   
+             <div class="dir e" :class="{ active: session.exits.includes('e') }">e</div>
+             <div class="dir sw" :class="{ active: session.exits.includes('sw') }">sw</div> 
+             <div class="dir s" :class="{ active: session.exits.includes('s') }">s</div> 
+             <div class="dir se" :class="{ active: session.exits.includes('se') }">se</div>
           </div>
         </div>
       </div>
       
-      <div class="panel vitals-panel">
+      <div class="panel vitals-panel" v-if="session.vitals">
         <div class="panel-header">▼ VITALS</div>
         <div class="panel-content vitals-list">
            <div class="vital-row"><span class="label">health</span> <span class="value red">{{ session.vitals.health }}/{{ session.vitals.maxHealth }}</span></div>
@@ -146,14 +152,17 @@ onMounted(scrollToBottom);
 }
 
 .hud {
+  grid-column: 1; /* Force Column 1 */
   display: flex;
   flex-direction: column;
   border-right: 1px solid #333;
   background: #1e1e1e;
   overflow-y: auto;
+  min-width: 250px; /* Ensure visual width */
 }
 
 .main {
+  grid-column: 2; /* Force Column 2 */
   display: grid;
   /* Hands (3em) | Streams (13em or 0) | Feed (1fr) | CLI (4em) */
   grid-template-rows: 3em 150px 1fr 4em;
