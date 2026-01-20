@@ -1,17 +1,46 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import ConnectionModal from "./components/ConnectionModal.vue";
 import SessionView from "./components/Session.vue";
 import SessionButton from "./components/SessionButton.vue";
 import { useSessionStore } from "./stores/session";
-import { onMounted } from "vue";
 
 const sessionStore = useSessionStore();
 const showConnectionModal = ref(false);
 
 onMounted(() => {
 	sessionStore.scanAndConnect();
+    window.addEventListener("keydown", handleGlobalKey);
 });
+
+onUnmounted(() => {
+    window.removeEventListener("keydown", handleGlobalKey);
+});
+
+function handleGlobalKey(e: KeyboardEvent) {
+    // Support Alt+1..9 and F1..F12 for session switching
+    let index = -1;
+    
+    // Alt + Number
+    if (e.altKey && e.key >= '1' && e.key <= '9') {
+        index = parseInt(e.key) - 1;
+    }
+    // F-keys (F1-F12)
+    else if (e.key.startsWith('F') && e.key.length > 1) {
+        const fNum = parseInt(e.key.substring(1));
+        if (!isNaN(fNum)) {
+            index = fNum - 1;
+        }
+    }
+
+    if (index >= 0) {
+        const sessions = Array.from(sessionStore.sessions.values());
+        if (sessions[index]) {
+            console.log("Switching to session via Shortcut:", sessions[index].name);
+            sessionStore.currentSessionId = sessions[index].name;
+        }
+    }
+}
 
 function handleConnect(config: { name: string; host: string; port: number }) {
 	sessionStore
