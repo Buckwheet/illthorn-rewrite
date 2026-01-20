@@ -32,6 +32,7 @@ export interface Session {
 	thoughts: string[];
 	room: string[];
 	deaths: string[];
+	exits: string[]; // ['n', 's', 'out', ...]
 
 	// Debugging
 	debugLog: string[];
@@ -101,9 +102,20 @@ export const useSessionStore = defineStore("session", () => {
 
 				// Handle Tags...
 				for (const tag of result.tags) {
+					// Compass Handling
+					if (tag.name === "compass") {
+						session.exits = [];
+					}
+					if (tag.name === "dir") {
+						const dir = tag.attributes["value"];
+						if (dir && !session.exits.includes(dir)) {
+							session.exits.push(dir);
+						}
+					}
+
 					if (tag.name !== ":text") {
 						session.debugLog.push(`Tag: <${tag.name} id='${tag.attributes["id"] || ""}'>`);
-						if (session.debugLog.length > 50) session.debugLog.shift();
+						if (session.debugLog.length > 200) session.debugLog.shift();
 					}
 
 					if (tag.name === "progressBar") {
@@ -140,6 +152,13 @@ export const useSessionStore = defineStore("session", () => {
 			console.log("Connecting to session:", config.name);
 			await invoke("connect_session", { config });
 
+			// Handshake (Request XML Tags)
+			// wait a brief moment? 
+			// In Rust backend we could do it, but here is fine too.
+			setTimeout(() => {
+				invoke("send_command", { session: config.name, command: "<c>" });
+			}, 1000);
+
 			// Initialize Parser
 			parsers.set(config.name, new GameParser());
 
@@ -152,6 +171,7 @@ export const useSessionStore = defineStore("session", () => {
 				room: [],
 				deaths: [],
 				debugLog: [],
+				exits: [],
 				vitals: { ...defaultVitals }, // Clone defaults
 				parser: null, // Placeholder or remove field from interface
 			};

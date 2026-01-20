@@ -149,13 +149,24 @@ export class GameParser {
 			match = attrRegex.exec(attrString);
 		}
 
+
 		// Handle State Logic (Streams)
-		if (tagName === "stream") {
+		// Standard StormFront uses pushStream/popStream
+		if (tagName === "stream" || tagName === "pushStream") {
 			if (isClose) {
+				// <stream> shouldn't really close via </stream> if it's pushStream, but standard simple stream might.
+				// Assuming popStream handles popping.
 				this.currentStream = "main";
 			} else {
 				this.currentStream = attributes["id"] || "main";
 			}
+		}
+
+		if (tagName === "popStream") {
+			this.currentStream = "main";
+			// Ideally we should use a stack, but for GSIV 'main' is usually the fallback.
+			// If nested streams exist, a stack would be better.
+			// For now, reset to main is likely sufficient for Thoughts/Deaths.
 		}
 
 		tags.push({ name: tagName, attributes, text: "" });

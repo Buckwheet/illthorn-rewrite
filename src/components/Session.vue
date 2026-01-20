@@ -120,13 +120,13 @@ onMounted(scrollToBottom);
         <div class="panel thoughts-panel">
             <div class="panel-header">▼ THOUGHTS</div>
             <div class="panel-content stream-content">
-                <div v-for="(line, i) in session.thoughts" :key="i" class="stream-line">{{ line }}</div>
+                <div v-for="(line, i) in session.thoughts" :key="i" class="stream-line" v-html="line"></div>
             </div>
         </div>
         <div class="panel deaths-panel">
             <div class="panel-header">▼ DEATHS</div>
             <div class="panel-content stream-content">
-                 <div v-for="(line, i) in session.deaths" :key="i" class="stream-line">{{ line }}</div>
+                 <div v-for="(line, i) in session.deaths" :key="i" class="stream-line" v-html="line"></div>
             </div>
         </div>
     </div>
@@ -178,8 +178,13 @@ onMounted(scrollToBottom);
     text-align: center;
     padding: 5px 0;
     font-size: 0.8em;
-    cursor: default;
     user-select: none;
+}
+.dir.active {
+    background: #444;
+    color: #8abeb7;
+    font-weight: bold;
+    border-color: #8abeb7;
 }
 .dir.out { background: #00bc8c; color: white; } /* Mock active state */
 
