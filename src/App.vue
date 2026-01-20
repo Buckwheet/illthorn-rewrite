@@ -4,11 +4,10 @@ import ConnectionModal from "./components/ConnectionModal.vue";
 import SessionView from "./components/Session.vue";
 import SessionButton from "./components/SessionButton.vue";
 import { useSessionStore } from "./stores/session";
+import { onMounted } from "vue";
 
 const sessionStore = useSessionStore();
 const showConnectionModal = ref(false);
-
-import { onMounted } from "vue";
 
 onMounted(() => {
 	sessionStore.scanAndConnect();
@@ -76,6 +75,78 @@ body {
 </style>
 
 <style scoped>
-/* Scoped styles for the app shell */
-/* We rely on global SASS for most things, but these define the grid */
+/* Main App Grid */
+#app-container {
+    display: grid;
+    height: 100vh;
+    /* Actions (Left Strip) | Main Content */
+    grid-template-columns: 96px 1fr;
+    overflow: hidden;
+}
+
+#app-left-pane {
+    background: #111;
+    border-right: 1px solid #333;
+    display: flex;
+    flex-direction: column;
+}
+
+#actions {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+}
+
+h3 {
+    text-align: center;
+    font-size: 0.7em;
+    color: #666;
+    margin: 10px 0;
+    text-transform: uppercase;
+}
+
+.session-list {
+    width: 100%;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.add-session {
+    width: 100%;
+    padding: 15px;
+    background: #222;
+    border: none;
+    border-top: 1px solid #333;
+    color: #888;
+    cursor: pointer;
+    font-size: 1.5em;
+}
+.add-session:hover {
+    background: #333;
+    color: white;
+}
+
+#app-right-pane {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    background: #000;
+}
+
+#current-context {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #666;
+}
 </style>
