@@ -98,6 +98,22 @@ onMounted(scrollToBottom);
         <div class="hand-slot spell"><span class="icon">✨</span> None</div>
       </div>
 
+      <!-- Streams Row (Thoughts/Deaths) Matches Original Layout -->
+      <div class="streams-container">
+          <div class="stream-column thoughts">
+              <div class="stream-header">THOUGHTS</div>
+              <div class="stream-content">
+                  <div v-for="(line, i) in session.thoughts" :key="i" class="stream-line" v-html="line"></div>
+              </div>
+          </div>
+          <div class="stream-column deaths">
+              <div class="stream-header">DEATHS</div>
+              <div class="stream-content">
+                  <div v-for="(line, i) in session.deaths" :key="i" class="stream-line" v-html="line"></div>
+              </div>
+          </div>
+      </div>
+
       <div class="feed" ref="feedContainer">
         <div v-for="(line, index) in session.feed" :key="index" class="feed-line" v-html="line"></div>
       </div>
@@ -115,145 +131,87 @@ onMounted(scrollToBottom);
          />
       </div>
     </div>
-
-    <div class="hud right-hud">
-        <div class="panel thoughts-panel">
-            <div class="panel-header">▼ THOUGHTS</div>
-            <div class="panel-content stream-content">
-                <div v-for="(line, i) in session.thoughts" :key="i" class="stream-line" v-html="line"></div>
-            </div>
-        </div>
-        <div class="panel deaths-panel">
-            <div class="panel-header">▼ DEATHS</div>
-            <div class="panel-content stream-content">
-                 <div v-for="(line, i) in session.deaths" :key="i" class="stream-line" v-html="line"></div>
-            </div>
-        </div>
-    </div>
   </div>
 </template>
 
 <style scoped>
+/* Original Illthorn Layout Replication */
 .session {
-  display: flex;
-  flex: 1;
-  height: 100%;
+  display: grid;
+  height: 100vh;
+  /* Left HUD (14em) | Main (1fr) | Right (0) */
+  grid-template-columns: var(--hud-width, 250px) 1fr 0;
   overflow: hidden;
   background: #111;
 }
 
 .hud {
-  width: 250px;
-  background: #1e1e1e;
-  border-right: 1px solid #333;
   display: flex;
   flex-direction: column;
-}
-
-.panel-header {
-    background: #252526;
-    padding: 5px 10px;
-    font-size: 0.8em;
-    font-weight: bold;
-    color: #ccc;
-    cursor: pointer;
-    border-bottom: 1px solid #333;
-}
-
-.panel-content {
-    padding: 10px;
-}
-
-/* Compass Grid */
-.compass-box {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 2px;
-    width: 100px;
-    margin: 0 auto;
-}
-.dir {
-    background: #333;
-    color: #666;
-    text-align: center;
-    padding: 5px 0;
-    font-size: 0.8em;
-    user-select: none;
-}
-.dir.active {
-    background: #444;
-    color: #8abeb7;
-    font-weight: bold;
-    border-color: #8abeb7;
-}
-.dir.out { background: #00bc8c; color: white; } /* Mock active state */
-
-/* Vitals */
-.vital-row {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 4px;
-    font-size: 0.9em;
-}
-.vital-row .label { color: #aaa; text-align: right; width: 50%; padding-right: 10px; }
-.vital-row .value { font-weight: bold; width: 50%; }
-.value.red { color: #ff6b6b; }
-.value.blue { color: #4dabf7; }
-.value.white { color: #fff; }
-.value.yellow { color: #fcc419; }
-
-.value.yellow { color: #fcc419; }
-
-.right-hud {
-  width: 250px; /* Same width as left hud */
-  border-left: 1px solid #333;
-  border-right: none;
-}
-
-.stream-content {
-    height: 150px;
-    overflow-y: auto;
-    font-size: 0.9em;
-    color: #aaa;
-}
-.stream-line {
-    border-bottom: 1px solid #222;
-    padding: 2px 0;
+  border-right: 1px solid #333;
+  background: #1e1e1e;
+  overflow-y: auto;
 }
 
 .main {
-  flex: 1; /* Grow to fill space */
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  /* Hands (3em) | Streams (13em or 0) | Feed (1fr) | CLI (4em) */
+  grid-template-rows: 3em 150px 1fr 4em;
+  max-height: 100vh;
   background: #000;
-  min-width: 0; /* Important for flex children to shrink */
+  min-width: 0;
 }
 
+/* Hands Bar */
 .hands-bar {
-    display: flex;
-    background: #111;
-    border-bottom: 1px solid #333;
-    padding: 5px;
-    font-size: 0.9em;
+  display: flex;
+  background: #111;
+  border-bottom: 1px solid #333;
+  padding: 5px;
+  font-size: 0.9em;
+  align-items: center;
 }
 
-.hand-slot {
+/* Streams (Thoughts/Deaths) - Now Top Row in Main */
+.streams-container {
+    display: flex;
+    overflow: hidden;
+    border-bottom: 1px solid #333;
+    background: #111;
+}
+
+.stream-column {
     flex: 1;
-    text-align: center;
-    color: #ccc;
+    display: flex;
+    flex-direction: column;
     border-right: 1px solid #333;
 }
-.hand-slot:last-child { border-right: none; }
+.stream-column:last-child { border-right: none; }
+
+.stream-header {
+    background: #252526;
+    padding: 2px 5px;
+    font-size: 0.7em;
+    font-weight: bold;
+    color: #888;
+    text-align: center;
+}
+.stream-content {
+    flex: 1;
+    overflow-y: auto;
+    font-size: 0.85em;
+    color: #aaa;
+    padding: 5px;
+}
 
 .feed {
-  flex: 1;
   overflow-y: auto;
   padding: 10px;
   font-family: 'Consolas', 'Courier New', monospace;
   font-size: 14px;
   white-space: pre-wrap;
-  color: #ccc; /* Ensure visible text */
-  background: #1a0505; /* Debug background */
+  color: #ccc;
+  /* Removed Debug Red Background */
 }
 
 .cli-wrapper {
@@ -261,12 +219,7 @@ onMounted(scrollToBottom);
   padding: 8px;
   background: #222;
   border-top: 1px solid #333;
-}
-
-.prompt {
-    color: #888;
-    margin-right: 8px;
-    font-family: monospace;
+  align-items: center;
 }
 
 .cli {
