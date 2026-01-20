@@ -140,10 +140,9 @@ body {
 <style scoped>
 /* Main App Grid */
 #app-container {
-    display: grid;
+    display: flex;
+    flex-direction: row; /* Horizontal Flex */
     height: 100vh;
-    /* Actions (Left Strip) | Main Content */
-    grid-template-columns: 96px 1fr;
     overflow: hidden;
 }
 
@@ -152,6 +151,9 @@ body {
     border-right: 1px solid #333;
     display: flex;
     flex-direction: column;
+    /* Flex Props */
+    width: 96px;
+    flex-shrink: 0;
 }
 
 #actions {
@@ -194,8 +196,9 @@ h3 {
     display: flex;
     flex-direction: column;
     height: 100vh;
-    width: 100%; /* FORCE WIDTH */
-    min-width: 0; /* Prevent flex blowout */
+    /* Flex Expansion */
+    flex-grow: 1;
+    min-width: 0;
     overflow: hidden;
     background: #000;
 }
