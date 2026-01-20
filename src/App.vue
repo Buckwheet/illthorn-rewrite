@@ -79,6 +79,15 @@ function handleConnect(config: { name: string; host: string; port: number }) {
     </div>
     
     <div id="app-right-pane">
+      <!-- Debug Overlay -->
+      <div style="position: absolute; top: 0; right: 0; background: rgba(0,0,0,0.8); border: 1px solid red; color: lime; padding: 10px; z-index: 9999; font-family: monospace; font-size: 12px; pointer-events: none;">
+          <div>DEBUG OVERLAY</div>
+          <div>CurrentID: {{ sessionStore.currentSessionId || 'NULL' }}</div>
+          <div>Session Count: {{ sessionStore.sessions.size }}</div>
+          <div>Sessions: {{ Array.from(sessionStore.sessions.keys()).join(', ') }}</div>
+          <div>Active Session Found: {{ !!sessionStore.currentSession }}</div>
+      </div>
+
       <div id="current-context">
         <div v-if="!sessionStore.currentSession" class="empty-state">
           <p>No active session. Connect to start.</p>
