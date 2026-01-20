@@ -142,10 +142,13 @@ export class GameParser {
 		}
 
 		const attributes: Record<string, string> = {};
-		const attrRegex = /(\w+)\s*=\s*['"]([^'"]+)['"]/g;
+		// Regex to match key='value', key="value", or key=value (unquoted)
+		const attrRegex = /(\w+)\s*=\s*(?:['"]([^'"]*)['"]|([^'"\s>]+))/g;
 		let match = attrRegex.exec(attrString);
 		while (match !== null) {
-			attributes[match[1]] = match[2];
+			const key = match[1];
+			const value = match[2] !== undefined ? match[2] : match[3];
+			attributes[key] = value;
 			match = attrRegex.exec(attrString);
 		}
 

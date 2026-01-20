@@ -253,6 +253,7 @@ onMounted(scrollToBottom);
   font-size: 14px;
   white-space: pre-wrap;
   color: #ccc; /* Ensure visible text */
+  background: #1a0505; /* Debug background */
 }
 
 .cli-wrapper {

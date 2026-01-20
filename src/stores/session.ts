@@ -114,7 +114,7 @@ export const useSessionStore = defineStore("session", () => {
 					}
 
 					if (tag.name !== ":text") {
-						session.debugLog.push(`Tag: <${tag.name} id='${tag.attributes["id"] || ""}'>`);
+						session.debugLog.push(`<${tag.name} ${JSON.stringify(tag.attributes)}>`);
 						if (session.debugLog.length > 200) session.debugLog.shift();
 					}
 
@@ -130,15 +130,25 @@ export const useSessionStore = defineStore("session", () => {
 
 						// Parse Max from text if available
 						if (text) {
-							const match = text.match(/(\d+)\/(\d+)/);
+							// Try to find "current/max" pattern
+							const match = text.match(/(\d+)\s*\/\s*(\d+)/);
 							if (match) {
 								const current = Number(match[1]);
 								const max = Number(match[2]);
+
+								// Log success for debugging
+								if (id === "health" || id === "mana") {
+									session.debugLog.push(`Vitals Update: ${id} ${current}/${max}`);
+									if (session.debugLog.length > 200) session.debugLog.shift();
+								}
 
 								if (id === "health") { session.vitals.health = current; session.vitals.maxHealth = max; }
 								if (id === "mana") { session.vitals.mana = current; session.vitals.maxMana = max; }
 								if (id === "spirit") { session.vitals.spirit = current; session.vitals.maxSpirit = max; }
 								if (id === "stamina") { session.vitals.stamina = current; session.vitals.maxStamina = max; }
+							} else {
+								// Log failure
+								session.debugLog.push(`Vitals Fail: ${id} text='${text}'`);
 							}
 						}
 					}
