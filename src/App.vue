@@ -194,6 +194,8 @@ h3 {
     display: flex;
     flex-direction: column;
     height: 100vh;
+    width: 100%; /* FORCE WIDTH */
+    min-width: 0; /* Prevent flex blowout */
     overflow: hidden;
     background: #000;
 }
@@ -202,6 +204,7 @@ h3 {
     flex: 1;
     display: flex;
     flex-direction: column;
+    width: 100%; /* FORCE WIDTH */
     min-width: 0;
 }
 
