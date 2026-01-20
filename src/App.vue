@@ -98,27 +98,12 @@ function handleConnect(config: { name: string; host: string; port: number }) {
     </div>
     
     <div id="app-right-pane">
-      <!-- Debug Overlay -->
-      <div style="position: absolute; top: 0; right: 0; background: rgba(0,0,0,0.8); border: 1px solid red; color: lime; padding: 10px; z-index: 9999; font-family: monospace; font-size: 12px; pointer-events: none;">
-          <div>DEBUG OVERLAY</div>
-          <div>CurrentID: {{ sessionStore.currentSessionId || 'NULL' }}</div>
-          <div>Session Count: {{ sessionStore.sessions.size }}</div>
-          <div>Active Found: {{ !!sessionStore.currentSession }}</div>
-          <div>Context Dims: {{ contextDims.w }}x{{ contextDims.h }}</div>
-          <div style="color: red; font-weight: bold;">ERROR: {{ lastError || 'None' }}</div>
-      </div>
-
       <div id="current-context" ref="contextRef">
         <div v-if="!sessionStore.currentSession" class="empty-state">
           <p>No active session. Connect to start.</p>
         </div>
-        <!-- Yellow Wrapper to check slot -->
-        <div v-else style="border: 2px dashed yellow; flex: 1; display: flex; flex-direction: column; overflow: hidden;">
-            <!-- WHITE BOX TEST -->
-            <div style="background: white; color: black; padding: 20px; font-weight: bold;">
-                IF YOU SEE THIS, CONTAINER IS VALID.
-            </div>
-            
+        
+        <div v-else style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
             <SessionView :session="sessionStore.currentSession" />
         </div>
       </div>
