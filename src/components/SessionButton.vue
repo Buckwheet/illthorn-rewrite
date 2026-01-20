@@ -13,6 +13,7 @@ const store = useSessionStore();
 const isActive = computed(() => store.currentSessionId === props.session.name);
 
 function activate() {
+    console.log("SessionButton Clicked: Activating", props.session.name);
 	store.currentSessionId = props.session.name;
 }
 </script>

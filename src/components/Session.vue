@@ -12,7 +12,14 @@ const feedContainer = ref<HTMLElement | null>(null);
 const commandHistory = ref<string[]>([]);
 const historyIndex = ref(-1);
 
+onMounted(() => {
+    console.log("SessionView MOUNTED for", props.session.name);
+    console.log("Session Feed Length:", props.session.feed.length);
+    scrollToBottom();
+});
+
 function send() {
+    console.log("Sending command:", commandInput.value);
 	if (!commandInput.value) return;
     
     // History
@@ -56,11 +63,10 @@ function scrollToBottom() {
 }
 
 watch(() => props.session.feed.length, scrollToBottom);
-onMounted(scrollToBottom);
 </script>
 
 <template>
-  <div class="session" :id="session.name">
+  <div class="session" :id="session.name" style="border: 4px solid magenta !important;">
     <div class="hud">
       <div class="panel room-panel">
         <div class="panel-header">▼ ROOM</div>
