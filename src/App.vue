@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, onErrorCaptured } from "vue";
 import ConnectionModal from "./components/ConnectionModal.vue";
 import SessionView from "./components/Session.vue";
 import SessionButton from "./components/SessionButton.vue";
@@ -7,6 +7,13 @@ import { useSessionStore } from "./stores/session";
 
 const sessionStore = useSessionStore();
 const showConnectionModal = ref(false);
+const lastError = ref<any>(null);
+
+onErrorCaptured((err, _instance, info) => {
+    console.error("Captured Error:", err);
+    lastError.value = err?.toString() + " (" + info + ")";
+    return false;
+});
 
 onMounted(() => {
 	sessionStore.scanAndConnect();
@@ -84,18 +91,18 @@ function handleConnect(config: { name: string; host: string; port: number }) {
           <div>DEBUG OVERLAY</div>
           <div>CurrentID: {{ sessionStore.currentSessionId || 'NULL' }}</div>
           <div>Session Count: {{ sessionStore.sessions.size }}</div>
-          <div>Sessions: {{ Array.from(sessionStore.sessions.keys()).join(', ') }}</div>
-          <div>Active Session Found: {{ !!sessionStore.currentSession }}</div>
+          <div>Active Found: {{ !!sessionStore.currentSession }}</div>
+          <div style="color: red; font-weight: bold;">ERROR: {{ lastError || 'None' }}</div>
       </div>
 
       <div id="current-context">
         <div v-if="!sessionStore.currentSession" class="empty-state">
           <p>No active session. Connect to start.</p>
         </div>
-        <SessionView 
-          v-else 
-          :session="sessionStore.currentSession" 
-        />
+        <!-- Yellow Wrapper to check slot -->
+        <div v-else style="border: 2px dashed yellow; height: 100%; width: 100%; display: flex; flex-direction: column;">
+            <SessionView :session="sessionStore.currentSession" />
+        </div>
       </div>
     </div>
   </div>

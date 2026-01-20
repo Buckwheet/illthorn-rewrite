@@ -66,7 +66,7 @@ watch(() => props.session.feed.length, scrollToBottom);
 </script>
 
 <template>
-  <div class="session" :id="session.name" style="border: 4px solid magenta !important;">
+  <div class="session" :id="session.name" style="border: 4px solid magenta !important; background: blue !important; min-height: 500px !important; min-width: 500px !important; display: block !important;">
     <div class="hud">
       <div class="panel room-panel">
         <div class="panel-header">▼ ROOM</div>
