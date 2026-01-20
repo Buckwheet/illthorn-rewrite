@@ -9,6 +9,7 @@ const props = defineProps<{
 const store = useSessionStore();
 const commandInput = ref("");
 const feedContainer = ref<HTMLElement | null>(null);
+const thoughtsContainer = ref<HTMLElement | null>(null);
 const commandHistory = ref<string[]>([]);
 const historyIndex = ref(-1);
 
@@ -62,7 +63,16 @@ function scrollToBottom() {
 	});
 }
 
+function scrollToBottomThoughts() {
+	nextTick(() => {
+		if (thoughtsContainer.value) {
+			thoughtsContainer.value.scrollTop = thoughtsContainer.value.scrollHeight;
+		}
+	});
+}
+
 watch(() => props.session.feed.length, scrollToBottom);
+watch(() => props.session.thoughts.length, scrollToBottomThoughts);
 </script>
 
 <template>
@@ -133,7 +143,7 @@ watch(() => props.session.feed.length, scrollToBottom);
       <div class="streams-container">
           <div class="stream-column thoughts">
               <div class="stream-header">THOUGHTS</div>
-              <div class="stream-content">
+              <div class="stream-content" ref="thoughtsContainer">
                   <div v-for="(line, i) in session.thoughts" :key="i" class="stream-line" v-html="line"></div>
               </div>
           </div>

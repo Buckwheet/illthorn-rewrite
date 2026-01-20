@@ -54,6 +54,9 @@ export interface Session {
 
 	vitals: Vitals;
 	hands: Hands;
+
+	// Internal State
+	activeHand: "left" | "right" | "spell" | null;
 	parser: any; // Relaxed type to avoid struct/class mismatch issues during build
 }
 
@@ -115,23 +118,40 @@ export const useSessionStore = defineStore("session", () => {
 
 			// Append clean text to feed
 			if (result.cleanText) {
-				if (result.cleanText.trim()) session.feed.push(result.cleanText);
+				if (result.cleanText.trim()) {
+					if (session.feed.length > 2000) session.feed.shift();
+					session.feed.push(result.cleanText);
+				}
 			}
 
-			// Handle Segments (Streams)
+			// Handle Tags & Text Segments (Merged Loop for correct order)
 			for (const tag of result.tags) {
-				if (tag.name === ":text" && tag.attributes) {
-					const stream = tag.attributes["stream"];
+				// 1. Handle Text Content
+				if (tag.name === ":text") {
 					const text = tag.text || "";
-					if (!text.trim()) continue;
+					if (!text) continue; // Skip empty text
 
-					if (stream === "thoughts") session.thoughts.push(text);
-					if (stream === "room") session.room.push(text);
-					if (stream === "death") session.deaths.push(text);
+					// A. Stream Handling (Thoughts, Deaths, Room)
+					if (tag.attributes && tag.attributes["stream"]) {
+						const stream = tag.attributes["stream"];
+						if (stream === "thoughts") session.thoughts.push(text);
+						if (stream === "room") session.room.push(text);
+						if (stream === "death") session.deaths.push(text);
+					}
+
+					// B. Active Hand Capture
+					if (session.activeHand && text.trim()) {
+						session.hands[session.activeHand] = text.trim();
+					}
 				}
+				// 2. Handle Tags
+				else {
+					// Debug Log (excluding common spam)
+					if (tag.name !== "style" && tag.name !== "pushBold" && tag.name !== "popBold") {
+						session.debugLog.push(`<${tag.name} ${JSON.stringify(tag.attributes)}>`);
+						if (session.debugLog.length > 200) session.debugLog.shift();
+					}
 
-				// Handle Tags...
-				for (const tag of result.tags) {
 					// Compass Handling
 					if (tag.name === "compass") {
 						session.exits = [];
@@ -141,11 +161,6 @@ export const useSessionStore = defineStore("session", () => {
 						if (dir && !session.exits.includes(dir)) {
 							session.exits.push(dir);
 						}
-					}
-
-					if (tag.name !== ":text") {
-						session.debugLog.push(`<${tag.name} ${JSON.stringify(tag.attributes)}>`);
-						if (session.debugLog.length > 200) session.debugLog.shift();
 					}
 
 					if (tag.name === "progressBar") {
@@ -166,12 +181,6 @@ export const useSessionStore = defineStore("session", () => {
 								const current = Number(match[1]);
 								const max = Number(match[2]);
 
-								// Log success for debugging
-								if (id === "health" || id === "mana") {
-									session.debugLog.push(`Vitals Update: ${id} ${current}/${max}`);
-									if (session.debugLog.length > 200) session.debugLog.shift();
-								}
-
 								if (id === "health") { session.vitals.health = current; session.vitals.maxHealth = max; }
 								if (id === "mana") { session.vitals.mana = current; session.vitals.maxMana = max; }
 								if (id === "spirit") { session.vitals.spirit = current; session.vitals.maxSpirit = max; }
@@ -182,22 +191,28 @@ export const useSessionStore = defineStore("session", () => {
 								if (id === "mindState") { session.vitals.mindState = value; session.vitals.mindText = text; }
 								if (id === "stance") { session.vitals.stance = value; session.vitals.stanceText = text; }
 								if (id === "nextLevel") { session.vitals.nextLevel = value; session.vitals.nextLevelText = text; }
-								// Log failure
-								// session.debugLog.push(`Vitals Fail: ${id} text='${text}'`);
 							}
 						}
 					}
 
 					// Hands Handling
 					if (tag.name === "left") {
-						session.hands.left = tag.text || "Empty";
+						session.activeHand = "left";
+						if (tag.text) session.hands.left = tag.text;
 					}
+					if (tag.name === "/left") session.activeHand = null;
+
 					if (tag.name === "right") {
-						session.hands.right = tag.text || "Empty";
+						session.activeHand = "right";
+						if (tag.text) session.hands.right = tag.text;
 					}
+					if (tag.name === "/right") session.activeHand = null;
+
 					if (tag.name === "spell") {
-						session.hands.spell = tag.text || "None";
+						session.activeHand = "spell";
+						if (tag.text) session.hands.spell = tag.text;
 					}
+					if (tag.name === "/spell") session.activeHand = null;
 				}
 			}
 		}
@@ -229,7 +244,8 @@ export const useSessionStore = defineStore("session", () => {
 				debugLog: [],
 				exits: [],
 				vitals: { ...defaultVitals }, // Clone defaults
-				hands: { ...defaultHands },
+				hands: { ...defaultHands }, // Clone defaults
+				activeHand: null,
 				parser: null, // Placeholder or remove field from interface
 			};
 
@@ -246,6 +262,12 @@ export const useSessionStore = defineStore("session", () => {
 
 		try {
 			console.log("Sending command:", command);
+
+			// Local Echo
+			if (currentSession.value) {
+				currentSession.value.feed.push(`<span class="echo">&gt; ${command}</span>`);
+			}
+
 			await invoke("send_command", {
 				session: currentSession.value.name,
 				command,

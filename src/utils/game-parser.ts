@@ -86,7 +86,7 @@ export class GameParser {
 
 	private processText(content: string, tags: GameTag[], stream: string) {
 		const escaped = content
-			.replace(/&/g, "&amp;")
+			.replace(/&(?!(?:amp|lt|gt|quot|apos);)/g, "&amp;")
 			.replace(/</g, "&lt;")
 			.replace(/>/g, "&gt;");
 
