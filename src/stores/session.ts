@@ -47,6 +47,8 @@ export interface Session {
 	thoughts: string[];
 	room: string[];
 	deaths: string[];
+	speech: string[];
+	familiar: string[];
 	exits: string[]; // ['n', 's', 'out', ...]
 
 	// Debugging
@@ -131,12 +133,13 @@ export const useSessionStore = defineStore("session", () => {
 					const text = tag.text || "";
 					if (!text) continue; // Skip empty text
 
-					// A. Stream Handling (Thoughts, Deaths, Room)
 					if (tag.attributes && tag.attributes["stream"]) {
 						const stream = tag.attributes["stream"];
 						if (stream === "thoughts") session.thoughts.push(text);
 						if (stream === "room") session.room.push(text);
 						if (stream === "death") session.deaths.push(text);
+						if (stream === "speech" || stream === "talk") session.speech.push(text);
+						if (stream === "familiar") session.familiar.push(text);
 					}
 
 					// B. Active Hand Capture
@@ -232,12 +235,13 @@ export const useSessionStore = defineStore("session", () => {
 			console.log("Connecting to session:", config.name);
 			await invoke("connect_session", { config });
 
+
+
 			// Handshake (Request XML Tags)
-			// wait a brief moment? 
-			// In Rust backend we could do it, but here is fine too.
-			setTimeout(() => {
-				invoke("send_command", { session: config.name, command: "<c>" });
-			}, 1000);
+			// Send immediately without timeout to avoid missing the startup window
+			// And do NOT local echo it, so the user doesn't see "><c>"
+			console.log("Sending handshake <c>");
+			invoke("send_command", { session: config.name, command: "<c>" });
 
 			// Initialize Parser
 			parsers.set(config.name, new GameParser());
@@ -250,6 +254,8 @@ export const useSessionStore = defineStore("session", () => {
 				thoughts: [],
 				room: [],
 				deaths: [],
+				speech: [],
+				familiar: [],
 				debugLog: [],
 				exits: [],
 				vitals: { ...defaultVitals }, // Clone defaults

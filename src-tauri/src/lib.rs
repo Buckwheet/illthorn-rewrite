@@ -57,8 +57,15 @@ async fn disconnect_session(
     name: String,
     state: State<'_, SessionState>,
 ) -> Result<(), String> {
-    let mut sessions = state.0.lock().map_err(|e| e.to_string())?;
-    sessions.remove(&name); // Drop the session, closing the connection
+    let session = {
+        let mut sessions = state.0.lock().map_err(|e| e.to_string())?;
+        sessions.remove(&name)
+    };
+
+    if let Some(session) = session {
+        // Shutdown the connection explicitly
+        let _ = session.disconnect().await; // Ignore error if already closed
+    }
     Ok(())
 }
 

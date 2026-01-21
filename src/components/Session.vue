@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, onMounted, ref, watch } from "vue";
+import { nextTick, onMounted, ref, reactive, watch } from "vue";
 import { type Session, useSessionStore } from "../stores/session";
 
 const props = defineProps<{
@@ -10,17 +10,25 @@ const store = useSessionStore();
 const commandInput = ref("");
 const feedContainer = ref<HTMLElement | null>(null);
 const thoughtsContainer = ref<HTMLElement | null>(null);
+const speechContainer = ref<HTMLElement | null>(null);
+const familiarContainer = ref<HTMLElement | null>(null);
 const commandHistory = ref<string[]>([]);
 const historyIndex = ref(-1);
 
+const visiblePanels = reactive({
+    thoughts: true,
+    deaths: true,
+    speech: true,
+    familiar: true,
+    debug: false
+});
+
 onMounted(() => {
     console.log("SessionView MOUNTED for", props.session.name);
-    console.log("Session Feed Length:", props.session.feed.length);
     scrollToBottom();
 });
 
 function send() {
-    console.log("Sending command:", commandInput.value);
 	if (!commandInput.value) return;
     
     // History
@@ -31,6 +39,10 @@ function send() {
     
 	store.sendCommand(commandInput.value);
 	commandInput.value = "";
+}
+
+function sendDir(dir: string) {
+    store.sendCommand(dir);
 }
 
 function cycleHistory(direction: 'up' | 'down') {
@@ -63,35 +75,49 @@ function scrollToBottom() {
 	});
 }
 
-function scrollToBottomThoughts() {
+function scrollStream(container: HTMLElement | null) {
 	nextTick(() => {
-		if (thoughtsContainer.value) {
-			thoughtsContainer.value.scrollTop = thoughtsContainer.value.scrollHeight;
+		if (container) {
+			container.scrollTop = container.scrollHeight;
 		}
 	});
 }
 
 watch(() => props.session.feed.length, scrollToBottom);
-watch(() => props.session.thoughts.length, scrollToBottomThoughts);
+watch(() => props.session.thoughts.length, () => scrollStream(thoughtsContainer.value));
+watch(() => props.session.speech.length, () => scrollStream(speechContainer.value));
+watch(() => props.session.familiar.length, () => scrollStream(familiarContainer.value));
 </script>
 
 <template>
   <div class="session" :id="session.name">
     <div class="hud">
+       <!-- Window Toggles Toolbar -->
+       <div class="panel toolbar-panel">
+         <div class="panel-header">WINDOWS</div>
+         <div class="panel-content toolbar-controls">
+            <button @click="visiblePanels.thoughts = !visiblePanels.thoughts" :class="{ active: visiblePanels.thoughts }">💭 Thoughts</button>
+            <button @click="visiblePanels.deaths = !visiblePanels.deaths" :class="{ active: visiblePanels.deaths }">💀 Deaths</button>
+            <button @click="visiblePanels.speech = !visiblePanels.speech" :class="{ active: visiblePanels.speech }">💬 Speech</button>
+            <button @click="visiblePanels.familiar = !visiblePanels.familiar" :class="{ active: visiblePanels.familiar }">🦅 Familiar</button>
+            <button @click="visiblePanels.debug = !visiblePanels.debug" :class="{ active: visiblePanels.debug }">🐞 Debug</button>
+         </div>
+       </div>
+
       <div class="panel room-panel">
         <div class="panel-header">▼ ROOM</div>
         <div class="panel-content compass-area">
           <div class="compass-box">
-             <!-- Compass with Logic -->
-             <div class="dir nw" :class="{ active: session.exits.includes('nw') }">nw</div> 
-             <div class="dir n" :class="{ active: session.exits.includes('n') }">n</div> 
-             <div class="dir ne" :class="{ active: session.exits.includes('ne') }">ne</div>
-             <div class="dir w" :class="{ active: session.exits.includes('w') }">w</div>   
-             <div class="dir out" :class="{ active: session.exits.includes('out') }">Out</div>   
-             <div class="dir e" :class="{ active: session.exits.includes('e') }">e</div>
-             <div class="dir sw" :class="{ active: session.exits.includes('sw') }">sw</div> 
-             <div class="dir s" :class="{ active: session.exits.includes('s') }">s</div> 
-             <div class="dir se" :class="{ active: session.exits.includes('se') }">se</div>
+             <!-- Compass with Logic and Clicks -->
+             <div class="dir nw" :class="{ active: session.exits.includes('nw') }" @click="sendDir('nw')">nw</div> 
+             <div class="dir n" :class="{ active: session.exits.includes('n') }" @click="sendDir('n')">n</div> 
+             <div class="dir ne" :class="{ active: session.exits.includes('ne') }" @click="sendDir('ne')">ne</div>
+             <div class="dir w" :class="{ active: session.exits.includes('w') }" @click="sendDir('w')">w</div>   
+             <div class="dir out" :class="{ active: session.exits.includes('out') }" @click="sendDir('out')">Out</div>   
+             <div class="dir e" :class="{ active: session.exits.includes('e') }" @click="sendDir('e')">e</div>
+             <div class="dir sw" :class="{ active: session.exits.includes('sw') }" @click="sendDir('sw')">sw</div> 
+             <div class="dir s" :class="{ active: session.exits.includes('s') }" @click="sendDir('s')">s</div> 
+             <div class="dir se" :class="{ active: session.exits.includes('se') }" @click="sendDir('se')">se</div>
           </div>
         </div>
       </div>
@@ -124,7 +150,7 @@ watch(() => props.session.thoughts.length, scrollToBottomThoughts);
          <div class="panel-header">▼ DEBUFFS</div>
          <div class="panel-content"><div class="empty-msg">None</div></div>
       </div>
-      <div class="panel debug-panel">
+      <div class="panel debug-panel" v-show="visiblePanels.debug">
          <div class="panel-header">DEBUG LOG</div>
          <div class="panel-content debug-list">
             <div v-for="(log, i) in session.debugLog" :key="i" class="debug-line">{{ log }}</div>
@@ -139,15 +165,27 @@ watch(() => props.session.thoughts.length, scrollToBottomThoughts);
         <div class="hand-slot spell"><span class="icon">✨</span> <span v-html="session.hands.spell"></span></div>
       </div>
 
-      <!-- Streams Row (Thoughts/Deaths) Matches Original Layout -->
-      <div class="streams-container">
-          <div class="stream-column thoughts">
+      <!-- Streams Row (Thoughts/Deaths/Speech/Familiar) -->
+      <div class="streams-container" v-show="visiblePanels.thoughts || visiblePanels.deaths || visiblePanels.speech || visiblePanels.familiar">
+          <div class="stream-column thoughts" v-show="visiblePanels.thoughts">
               <div class="stream-header">THOUGHTS</div>
               <div class="stream-content" ref="thoughtsContainer">
                   <div v-for="(line, i) in session.thoughts" :key="i" class="stream-line" v-html="line"></div>
               </div>
           </div>
-          <div class="stream-column deaths">
+          <div class="stream-column speech" v-show="visiblePanels.speech">
+              <div class="stream-header">SPEECH</div>
+              <div class="stream-content" ref="speechContainer">
+                  <div v-for="(line, i) in session.speech" :key="i" class="stream-line" v-html="line"></div>
+              </div>
+          </div>
+           <div class="stream-column familiar" v-show="visiblePanels.familiar">
+              <div class="stream-header">FAMILIAR</div>
+              <div class="stream-content" ref="familiarContainer">
+                  <div v-for="(line, i) in session.familiar" :key="i" class="stream-line" v-html="line"></div>
+              </div>
+          </div>
+          <div class="stream-column deaths" v-show="visiblePanels.deaths">
               <div class="stream-header">DEATHS</div>
               <div class="stream-content">
                   <div v-for="(line, i) in session.deaths" :key="i" class="stream-line" v-html="line"></div>
@@ -176,6 +214,43 @@ watch(() => props.session.thoughts.length, scrollToBottomThoughts);
 </template>
 
 <style scoped>
+/* Toolbar Panel */
+.toolbar-panel {
+    border-bottom: 1px solid #333;
+    background: #1e1e1e;
+    flex: 0 0 auto;
+}
+
+.toolbar-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 5px;
+}
+
+.toolbar-controls button {
+    background: #333;
+    border: 1px solid #444;
+    color: #888;
+    font-size: 0.75em;
+    padding: 3px 6px;
+    cursor: pointer;
+    flex: 1 1 40%; /* 2 per row approx */
+    text-align: left;
+    transition: all 0.2s;
+}
+
+.toolbar-controls button:hover {
+    background: #444;
+    color: #ccc;
+}
+
+.toolbar-controls button.active {
+    background: #007acc;
+    color: white;
+    border-color: #0098ff;
+}
+
 /* Original Illthorn Layout Replication */
 .session {
   display: grid;
@@ -200,7 +275,7 @@ watch(() => props.session.thoughts.length, scrollToBottomThoughts);
   grid-column: 2; /* Force Column 2 */
   display: grid;
   /* Hands (3em) | Streams (13em or 0) | Feed (1fr) | CLI (4em) */
-  grid-template-rows: 3em 150px 1fr 4em;
+  grid-template-rows: 3em auto 1fr 4em; /* Auto for streams based on content or fixed? */
   max-height: 100vh;
   background: #000;
   min-width: 0;
@@ -220,6 +295,7 @@ watch(() => props.session.thoughts.length, scrollToBottomThoughts);
 .streams-container {
     display: flex;
     overflow: hidden;
+    height: 150px; /* Fixed height for streams row */
     border-bottom: 1px solid #333;
     background: #111;
 }
@@ -229,6 +305,7 @@ watch(() => props.session.thoughts.length, scrollToBottomThoughts);
     display: flex;
     flex-direction: column;
     border-right: 1px solid #333;
+    min-width: 0; /* Allow flex shrink */
 }
 .stream-column:last-child { border-right: none; }
 
@@ -306,4 +383,17 @@ watch(() => props.session.thoughts.length, scrollToBottomThoughts);
 .debug-line {
     border-bottom: 1px solid #222;
 }
-</style>
+
+/* Compass Active State */
+.compass-box .dir {
+    cursor: pointer;
+}
+.compass-box .dir:hover {
+    color: white;
+    background: #333;
+}
+.compass-box .dir.active {
+    color: #fff;
+    font-weight: bold;
+    text-shadow: 0 0 5px #00bc8c; /* Highlight */
+}</style>

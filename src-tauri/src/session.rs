@@ -69,4 +69,10 @@ impl Session {
         writer.flush().await.map_err(|e| e.to_string())?;
         Ok(())
     }
+
+    pub async fn disconnect(&self) -> Result<(), String> {
+        let mut writer = self.writer.lock().await;
+        writer.shutdown().await.map_err(|e| e.to_string())?;
+        Ok(())
+    }
 }
