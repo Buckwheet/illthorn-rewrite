@@ -53,6 +53,21 @@ async fn send_command(
 }
 
 #[tauri::command]
+async fn send_raw_command(
+    session: String,
+    command: String,
+    state: State<'_, SessionState>,
+) -> Result<(), String> {
+    let sess = {
+        let sessions = state.0.lock().map_err(|e| e.to_string())?;
+        sessions.get(&session).cloned().ok_or_else(|| format!("Session {} not found", session))?
+    };
+
+    sess.send_bytes(command.into_bytes()).await?;
+    Ok(())
+}
+
+#[tauri::command]
 async fn disconnect_session(
     name: String,
     state: State<'_, SessionState>,
@@ -157,6 +172,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             connect_session,
             send_command,
+            send_raw_command,
             disconnect_session,
             list_sessions,
             debug_diagnostics

@@ -236,12 +236,11 @@ export const useSessionStore = defineStore("session", () => {
 			await invoke("connect_session", { config });
 
 
-
 			// Handshake (Request XML Tags)
-			// Send immediately without timeout to avoid missing the startup window
-			// And do NOT local echo it, so the user doesn't see "><c>"
+			// Use send_raw_command to ensure exact bytes are sent (e.g. <c>\r\n) without local echo or wrapper logic
 			console.log("Sending handshake <c>");
-			invoke("send_command", { session: config.name, command: "<c>" });
+			invoke("send_raw_command", { session: config.name, command: "<c>\r\n" });
+
 
 			// Initialize Parser
 			parsers.set(config.name, new GameParser());

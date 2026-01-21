@@ -70,6 +70,16 @@ impl Session {
         Ok(())
     }
 
+    pub async fn send_bytes(&self, data: Vec<u8>) -> Result<(), String> {
+        let mut writer = self.writer.lock().await;
+        writer
+            .write_all(&data)
+            .await
+            .map_err(|e| e.to_string())?;
+        writer.flush().await.map_err(|e| e.to_string())?;
+        Ok(())
+    }
+
     pub async fn disconnect(&self) -> Result<(), String> {
         let mut writer = self.writer.lock().await;
         writer.shutdown().await.map_err(|e| e.to_string())?;

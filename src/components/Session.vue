@@ -109,15 +109,15 @@ watch(() => props.session.familiar.length, () => scrollStream(familiarContainer.
         <div class="panel-content compass-area">
           <div class="compass-box">
              <!-- Compass with Logic and Clicks -->
-             <div class="dir nw" :class="{ active: session.exits.includes('nw') }" @click="sendDir('nw')">nw</div> 
-             <div class="dir n" :class="{ active: session.exits.includes('n') }" @click="sendDir('n')">n</div> 
-             <div class="dir ne" :class="{ active: session.exits.includes('ne') }" @click="sendDir('ne')">ne</div>
-             <div class="dir w" :class="{ active: session.exits.includes('w') }" @click="sendDir('w')">w</div>   
-             <div class="dir out" :class="{ active: session.exits.includes('out') }" @click="sendDir('out')">Out</div>   
-             <div class="dir e" :class="{ active: session.exits.includes('e') }" @click="sendDir('e')">e</div>
-             <div class="dir sw" :class="{ active: session.exits.includes('sw') }" @click="sendDir('sw')">sw</div> 
-             <div class="dir s" :class="{ active: session.exits.includes('s') }" @click="sendDir('s')">s</div> 
-             <div class="dir se" :class="{ active: session.exits.includes('se') }" @click="sendDir('se')">se</div>
+             <div class="dir nw" :class="{ active: session.exits.includes('nw') }" @click="session.exits.includes('nw') && sendDir('nw')">nw</div> 
+             <div class="dir n" :class="{ active: session.exits.includes('n') }" @click="session.exits.includes('n') && sendDir('n')">n</div> 
+             <div class="dir ne" :class="{ active: session.exits.includes('ne') }" @click="session.exits.includes('ne') && sendDir('ne')">ne</div>
+             <div class="dir w" :class="{ active: session.exits.includes('w') }" @click="session.exits.includes('w') && sendDir('w')">w</div>   
+             <div class="dir out" :class="{ active: session.exits.includes('out') }" @click="session.exits.includes('out') && sendDir('out')">Out</div>   
+             <div class="dir e" :class="{ active: session.exits.includes('e') }" @click="session.exits.includes('e') && sendDir('e')">e</div>
+             <div class="dir sw" :class="{ active: session.exits.includes('sw') }" @click="session.exits.includes('sw') && sendDir('sw')">sw</div> 
+             <div class="dir s" :class="{ active: session.exits.includes('s') }" @click="session.exits.includes('s') && sendDir('s')">s</div> 
+             <div class="dir se" :class="{ active: session.exits.includes('se') }" @click="session.exits.includes('se') && sendDir('se')">se</div>
           </div>
         </div>
       </div>
