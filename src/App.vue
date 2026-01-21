@@ -10,6 +10,7 @@ const showConnectionModal = ref(false);
 const lastError = ref<any>(null);
 const contextRef = ref<HTMLElement | null>(null);
 const contextDims = ref({ w: 0, h: 0 });
+const showSidebar = ref(true);
 
 onErrorCaptured((err, _instance, info) => {
     console.error("Captured Error:", err);
@@ -47,7 +48,7 @@ function handleGlobalKey(e: KeyboardEvent) {
     // F-keys (F1-F12)
     else if (e.key.startsWith('F') && e.key.length > 1) {
         const fNum = parseInt(e.key.substring(1));
-        if (!isNaN(fNum)) {
+        if (!Number.isNaN(fNum)) {
             index = fNum - 1;
         }
     }
@@ -82,7 +83,7 @@ function handleConnect(config: { name: string; host: string; port: number }) {
       @cancel="showConnectionModal = false" 
     />
 
-    <div id="app-left-pane">
+    <div id="app-left-pane" :class="{ closed: !showSidebar }">
       <div id="actions">
         <h3>Sessions</h3>
          <div class="session-list">
@@ -101,10 +102,12 @@ function handleConnect(config: { name: string; host: string; port: number }) {
       <div id="current-context" ref="contextRef">
         <div v-if="!sessionStore.currentSession" class="empty-state">
           <p>No active session. Connect to start.</p>
+          <button @click="showSidebar = !showSidebar" style="position: absolute; top: 10px; left: 10px; z-index: 1000">{{ showSidebar ? '«' : '»' }}</button>
         </div>
         
-        <div v-else style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
-            <SessionView :session="sessionStore.currentSession" />
+        <div v-else style="flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative">
+             <button @click="showSidebar = !showSidebar" style="position: absolute; top: 0px; left: 0px; z-index: 1000; background: #333; color: #fff; border: 1px solid #444; width: 20px; height: 100%; cursor: pointer;" title="Toggle Sidebar">{{ showSidebar ? '‹' : '›' }}</button>
+            <SessionView v-if="sessionStore.currentSession" :session="sessionStore.currentSession" :style="{ marginLeft: '20px' }" />
         </div>
       </div>
     </div>
@@ -139,6 +142,12 @@ body {
     /* Flex Props */
     width: 96px;
     flex-shrink: 0;
+    transition: width 0.2s;
+    overflow: hidden;
+}
+#app-left-pane.closed {
+    width: 0px;
+    border-right: none;
 }
 
 #actions {

@@ -15,6 +15,7 @@ export class GameParser {
 	private buffer: string = "";
 	private currentStream: string = "main";
 	private inHiddenTag: boolean = false;
+	private componentId: string | null = null;
 
 	parse(input: string): ParseResult {
 		this.buffer += input;
@@ -106,7 +107,7 @@ export class GameParser {
 
 		tags.push({
 			name: ":text",
-			attributes: { stream, style: styleClass },
+			attributes: { stream, style: styleClass, component: this.componentId || "" },
 			text: processedEscaped,
 		});
 	}
@@ -116,8 +117,12 @@ export class GameParser {
 		stream: string,
 		styleClass: string,
 	): string {
-		// Allow 'main' AND 'room' streams to appear in clean text (Main Feed)
-		if (stream !== "main" && stream !== "room") return "";
+		// Only 'main' stream appears in clean text (Main Feed)
+		// Added: Suppress 'room' stream because it has its own window now and was causing spam.
+		if (stream !== "main") return "";
+
+		// Suppress room components from Main Feed (they go to Room window)
+		if (this.componentId && this.componentId.startsWith("room")) return "";
 
 		// Suppress content if we are inside a hidden tag (like Hand info)
 		if (this.inHiddenTag) return "";
@@ -189,9 +194,18 @@ export class GameParser {
 			// For now, reset to main is likely sufficient for Thoughts/Deaths.
 		}
 
+		// Handle Components (Room Description, Room Objs, etc.)
+		if (tagName === "component" || tagName === "compDef") {
+			if (isClose) {
+				this.componentId = null;
+			} else {
+				this.componentId = attributes["id"] || null;
+			}
+		}
+
 		// Handle Hidden Tags (Hands, etc) to suppress output in feed
 		// These tags contain text that should be parsed into state, but NOT shown in feed.
-		const hiddenTags = ["left", "right", "spell", "inv"];
+		const hiddenTags = ["left", "right", "spell", "inv", "dialogData"];
 		if (hiddenTags.includes(tagName)) {
 			if (isClose) {
 				this.inHiddenTag = false;

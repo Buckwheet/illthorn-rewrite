@@ -49,7 +49,17 @@ export interface Session {
 	deaths: string[];
 	speech: string[];
 	familiar: string[];
+	activeSpells: Record<string, { text: string; value: string; top?: string; left?: string; }>; // ID -> Content
 	exits: string[]; // ['n', 's', 'out', ...]
+
+	// New Phase 30 Streams
+	arrivals: string[]; // logons
+	bounty: string[];
+	society: string[];
+	ambients: string[];
+	announcements: string[]; // announcements
+	loot: string[];
+	invStream: string[]; // inv stream
 
 	// Debugging
 	debugLog: string[];
@@ -59,6 +69,7 @@ export interface Session {
 
 	// Internal State
 	activeHand: "left" | "right" | "spell" | null;
+	parsingActiveSpells: boolean; // State flag for dialog
 	parser: any; // Relaxed type to avoid struct/class mismatch issues during build
 }
 
@@ -140,6 +151,21 @@ export const useSessionStore = defineStore("session", () => {
 						if (stream === "death") session.deaths.push(text);
 						if (stream === "speech" || stream === "talk") session.speech.push(text);
 						if (stream === "familiar") session.familiar.push(text);
+
+						// Phase 30 Streams
+						if (stream === "logons") session.arrivals.push(text);
+						if (stream === "bounty") session.bounty.push(text);
+						if (stream === "society") session.society.push(text);
+						if (stream === "ambients") session.ambients.push(text);
+						if (stream === "announcements") session.announcements.push(text);
+						if (stream === "loot") session.loot.push(text);
+						if (stream === "inv") session.invStream.push(text);
+					}
+
+					// Component Capture (Room Objs, etc.)
+					if (tag.attributes && tag.attributes["component"]) {
+						const comp = tag.attributes["component"];
+						if (comp.startsWith("room")) session.room.push(text);
 					}
 
 					// B. Active Hand Capture
@@ -149,9 +175,14 @@ export const useSessionStore = defineStore("session", () => {
 				}
 				// 2. Handle Tags
 				else {
-					// Debug Log (excluding common spam)
 					if (tag.name !== "style" && tag.name !== "pushBold" && tag.name !== "popBold") {
-						session.debugLog.push(`<${tag.name} ${JSON.stringify(tag.attributes)}>`);
+						// Enhanced Debug: Show Dialog/Component tags clearly
+						if (tag.name === "dialogData" || tag.name === "component" || tag.name === "label" || tag.name === "dir" || tag.name === "compass") {
+							session.debugLog.push(`[${tag.name}] id=${tag.attributes['id'] || ''} val=${tag.attributes['value'] || ''} text=${tag.text || ''}`);
+						} else {
+							session.debugLog.push(`<${tag.name} ${JSON.stringify(tag.attributes)}>`);
+						}
+
 						if (session.debugLog.length > 200) session.debugLog.shift();
 					}
 
@@ -225,6 +256,72 @@ export const useSessionStore = defineStore("session", () => {
 							if (tag.text) session.hands.spell = tag.text;
 						}
 					}
+
+					// Active Spells (Dialog Parsing)
+					// Robust State-Based Parsing
+					if (tag.name === "dialogData" && tag.attributes["id"]) {
+						const dialogId = tag.attributes["id"].toLowerCase();
+
+						if (dialogId === "active spells") {
+							if (tag.attributes["clear"] === "t") {
+								session.activeSpells = {}; // Clear ONLY if requested
+							}
+
+							if (tag.isClosing) {
+								session.parsingActiveSpells = false;
+							} else {
+								session.parsingActiveSpells = true;
+								// Do NOT clear list here implicitly, wait for clear='t'
+							}
+						}
+					}
+
+					// Capture ANY label OR LINK (clickable text) if we are inside the Active Spells dialog
+					// Warlock3 uses <link> for the spell name and <label> for the time
+					const isLabel = tag.name === "label" && tag.attributes["id"];
+					const isLink = tag.name === "link" && tag.attributes["id"];
+
+					if (isLabel || isLink) {
+						const id = tag.attributes["id"];
+						const value = tag.attributes["value"] || tag.attributes["text"] || tag.text || "";
+
+						const top = tag.attributes["top"];
+						const left = tag.attributes["left"];
+
+						// PHASE 40: Granular Debugging
+						// Log raw tags to Debug Window to help diagnose missing names
+						session.debugLog.push(`[SPELL DEBUG] Tag=${tag.name} ID=${id} Val=${value}`);
+
+						// If we are in the dialog context, OR the ID starts with "spell" (heuristic for updates)
+						if (session.parsingActiveSpells || id.startsWith("spell")) {
+							// PHASE 39: Spell ID Normalization for Merging
+							// PHASE 39: Spell ID Normalization for Merging
+							// Warlock sends "spellName123" (link) and "spellDuration123" (label).
+							// We need to strip "Name" or "Duration" to merge them into "spell123".
+							let normalizedId = id;
+							normalizedId = normalizedId.replace("Name", "");
+							normalizedId = normalizedId.replace("Duration", "");
+
+							// Initialize if missing
+							if (!session.activeSpells[normalizedId]) {
+								session.activeSpells[normalizedId] = { text: "", value: "" };
+							}
+
+							// Update fields based on tag type
+							if (tag.name === "link") {
+								// START LINK: This is the Name (and clickable command)
+								session.activeSpells[normalizedId].text = value || tag.attributes["id"]; // Fallback to ID if no text
+								if (top) session.activeSpells[normalizedId].top = top;
+								if (left) session.activeSpells[normalizedId].left = left;
+							} else if (tag.name === "label") {
+								// LABEL: This is typically the Duration
+								// Sometimes label also has top/left, but Link is primary for position
+								session.activeSpells[normalizedId].value = value;
+								if (top && !session.activeSpells[normalizedId].top) session.activeSpells[normalizedId].top = top;
+								if (left && !session.activeSpells[normalizedId].left) session.activeSpells[normalizedId].left = left;
+							}
+						}
+					}
 				}
 			}
 		}
@@ -237,7 +334,8 @@ export const useSessionStore = defineStore("session", () => {
 
 
 			// Handshake (Request XML Tags)
-			// Use send_raw_command to ensure exact bytes are sent (e.g. <c>\r\n) without local echo or wrapper logic
+			// Use send_raw_command to ensure exact bytes are sent
+			// RESTORED \r\n because generic <c> without newline causes buffer merge with next command (e.g. <c>look)
 			console.log("Sending handshake <c>");
 			invoke("send_raw_command", { session: config.name, command: "<c>\r\n" });
 
@@ -255,11 +353,23 @@ export const useSessionStore = defineStore("session", () => {
 				deaths: [],
 				speech: [],
 				familiar: [],
+				activeSpells: {},
+
+				// Phase 30
+				arrivals: [],
+				bounty: [],
+				society: [],
+				ambients: [],
+				announcements: [],
+				loot: [],
+				invStream: [],
+
 				debugLog: [],
 				exits: [],
 				vitals: { ...defaultVitals }, // Clone defaults
 				hands: { ...defaultHands }, // Clone defaults
 				activeHand: null,
+				parsingActiveSpells: false,
 				parser: null, // Placeholder or remove field from interface
 			};
 
@@ -279,7 +389,11 @@ export const useSessionStore = defineStore("session", () => {
 
 			// Local Echo
 			if (currentSession.value) {
-				currentSession.value.feed.push(`<span class="echo">&gt; ${command}</span>`);
+				// Suppress handshake echo (Aggressive Phase 40 Check)
+				// Any command containing <c> is suppressed from local echo to prevent artifacts
+				if (!command.includes("<c")) {
+					currentSession.value.feed.push(`<span class="echo">&gt; ${command}</span>`);
+				}
 			}
 
 			await invoke("send_command", {
