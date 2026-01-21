@@ -197,22 +197,31 @@ export const useSessionStore = defineStore("session", () => {
 
 					// Hands Handling
 					if (tag.name === "left") {
-						session.activeHand = "left";
-						if (tag.text) session.hands.left = tag.text;
+						if (tag.isClosing) {
+							session.activeHand = null;
+						} else {
+							session.activeHand = "left";
+							if (tag.text) session.hands.left = tag.text;
+						}
 					}
-					if (tag.name === "/left") session.activeHand = null;
 
 					if (tag.name === "right") {
-						session.activeHand = "right";
-						if (tag.text) session.hands.right = tag.text;
+						if (tag.isClosing) {
+							session.activeHand = null;
+						} else {
+							session.activeHand = "right";
+							if (tag.text) session.hands.right = tag.text;
+						}
 					}
-					if (tag.name === "/right") session.activeHand = null;
 
 					if (tag.name === "spell") {
-						session.activeHand = "spell";
-						if (tag.text) session.hands.spell = tag.text;
+						if (tag.isClosing) {
+							session.activeHand = null;
+						} else {
+							session.activeHand = "spell";
+							if (tag.text) session.hands.spell = tag.text;
+						}
 					}
-					if (tag.name === "/spell") session.activeHand = null;
 				}
 			}
 		}

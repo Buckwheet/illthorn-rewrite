@@ -134,9 +134,9 @@ watch(() => props.session.thoughts.length, scrollToBottomThoughts);
 
     <div class="main">
       <div class="hands-bar">
-        <div class="hand-slot left"><span class="icon">✋</span> {{ session.hands.left }}</div>
-        <div class="hand-slot right"><span class="icon">✋</span> {{ session.hands.right }}</div>
-        <div class="hand-slot spell"><span class="icon">✨</span> {{ session.hands.spell }}</div>
+        <div class="hand-slot left"><span class="icon">✋</span> <span v-html="session.hands.left"></span></div>
+        <div class="hand-slot right"><span class="icon">✋</span> <span v-html="session.hands.right"></span></div>
+        <div class="hand-slot spell"><span class="icon">✨</span> <span v-html="session.hands.spell"></span></div>
       </div>
 
       <!-- Streams Row (Thoughts/Deaths) Matches Original Layout -->
