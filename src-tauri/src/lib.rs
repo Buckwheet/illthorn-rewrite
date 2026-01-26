@@ -1,7 +1,7 @@
 use crate::session::{Session, SessionConfig};
 use std::collections::HashMap;
 use std::sync::Mutex;
-use tauri::{AppHandle, State};
+use tauri::{AppHandle, Listener, Manager, State};
 
 mod session;
 
