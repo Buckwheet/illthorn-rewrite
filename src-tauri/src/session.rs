@@ -1,8 +1,8 @@
+use std::sync::Arc;
 use tauri::{AppHandle, Emitter};
 use tokio::io::{AsyncReadExt, AsyncWriteExt, WriteHalf};
 use tokio::net::TcpStream;
 use tokio::sync::Mutex;
-use std::sync::Arc;
 
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub struct SessionConfig {
@@ -21,6 +21,7 @@ impl Session {
     pub async fn connect(config: SessionConfig, app: AppHandle) -> Result<Self, String> {
         let addr = format!("{}:{}", config.host, config.port);
         let stream = TcpStream::connect(&addr).await.map_err(|e| e.to_string())?;
+        stream.set_nodelay(true).map_err(|e| e.to_string())?;
 
         let (mut reader, writer) = tokio::io::split(stream);
         let name = config.name.clone();
@@ -39,10 +40,13 @@ impl Session {
                         // Emit event to frontend
                         // We use a specific event name format: "session_name/data" or similar
                         // Identifying the session in the payload is cleaner.
-                        let _ = app.emit("session-data", serde_json::json!({
-                            "session": name,
-                            "data": data.to_string()
-                        }));
+                        let _ = app.emit(
+                            "session-data",
+                            serde_json::json!({
+                                "session": name,
+                                "data": data.to_string()
+                            }),
+                        );
                     }
                     Err(e) => {
                         eprintln!("Error reading from session {}: {}", name, e);
@@ -72,10 +76,7 @@ impl Session {
 
     pub async fn send_bytes(&self, data: Vec<u8>) -> Result<(), String> {
         let mut writer = self.writer.lock().await;
-        writer
-            .write_all(&data)
-            .await
-            .map_err(|e| e.to_string())?;
+        writer.write_all(&data).await.map_err(|e| e.to_string())?;
         writer.flush().await.map_err(|e| e.to_string())?;
         Ok(())
     }

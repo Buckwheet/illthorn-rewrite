@@ -439,8 +439,11 @@ export const useSessionStore = defineStore("session", () => {
 			await invoke("connect_session", { config });
 
 			// Handshake (Request XML Tags)
-			// REMOVED PHASE 42 Handshake to prevent "><c>" artifacts
-			console.log("[Connection] Handshake skipped to prevent artifacts.");
+			// Phase 42: Restored Silent Handshake (\r\n) to prevent "Forcibly Closed" errors
+			console.log(
+				"[Connection] Sending silent handshake to keep connection alive.",
+			);
+			invoke("send_raw_command", { session: config.name, command: "\r\n" });
 
 			// Enhanced Logging
 			console.log(

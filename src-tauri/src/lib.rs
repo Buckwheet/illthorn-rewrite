@@ -218,6 +218,32 @@ pub fn run() {
             debug_diagnostics,
             save_debug_log
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .setup(|app| {
+            let app_handle = app.handle().clone();
+            app.listen("tauri://window-created", move |_| {
+                // unused for now
+            });
+            Ok(())
+        })
+        .build(tauri::generate_context!())
+        .expect("error while running tauri application")
+        .run(|app_handle, event| match event {
+            tauri::RunEvent::ExitRequested { api, .. } => {
+                // We can intercept exit here if needed, but managing async disconnection in sync callback is hard.
+                // Best effort: rely on Drop or explicit session management before this point.
+                // HOWEVER, for this specific "Forcibly Closed" issue, we need to try and close sockets.
+
+                // Ideally, we start a new runtime to block on close:
+                let state = app_handle.state::<SessionState>();
+                if let Ok(mut sessions) = state.0.lock() {
+                    // We need to iterate and clear.
+                    // Since we can't easily await here without a runtime,
+                    // we just drop the sessions. TCPStream `Drop` implementation *should* close the socket,
+                    // but `shutdown` is cleaner.
+                    // Let's just clear the map, triggering Drops.
+                    sessions.clear();
+                }
+            }
+            _ => {}
+        });
 }
