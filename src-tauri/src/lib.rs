@@ -236,12 +236,9 @@ pub fn run() {
                 // Ideally, we start a new runtime to block on close:
                 let state = app_handle.state::<SessionState>();
                 if let Ok(mut sessions) = state.0.lock() {
-                    // We need to iterate and clear.
-                    // Since we can't easily await here without a runtime,
-                    // we just drop the sessions. TCPStream `Drop` implementation *should* close the socket,
-                    // but `shutdown` is cleaner.
-                    // Let's just clear the map, triggering Drops.
-                    sessions.clear();
+                    // Explicitly type the map to fix inference issues
+                    let map: &mut HashMap<String, Session> = &mut sessions;
+                    map.clear();
                 }
             }
             _ => {}
