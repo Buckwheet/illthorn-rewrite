@@ -49,15 +49,18 @@ export interface Session {
 	deaths: string[];
 	speech: string[];
 	familiar: string[];
-	activeSpells: Record<string, {
-		text: string;
-		value: string;
-		top?: string;
-		left?: string;
-		// Phase 46: Timer Fields
-		durationSeconds?: number;
-		receivedAt?: number;
-	}>; // ID -> Content
+	activeSpells: Record<
+		string,
+		{
+			text: string;
+			value: string;
+			top?: string;
+			left?: string;
+			// Phase 46: Timer Fields
+			durationSeconds?: number;
+			receivedAt?: number;
+		}
+	>; // ID -> Content
 	exits: string[]; // ['n', 's', 'out', ...]
 
 	// New Phase 30 Streams
@@ -103,20 +106,20 @@ const defaultVitals: Vitals = {
 const defaultHands: Hands = {
 	left: "Empty",
 	right: "Empty",
-	spell: "None"
+	spell: "None",
 };
 
 // Phase 46: Helper to parse "HH:MM:SS" or "MM:SS" into seconds
 function parseDuration(timeStr: string): number {
-	const parts = timeStr.trim().split(':').map(Number);
+	const parts = timeStr.trim().split(":").map(Number);
 	if (parts.some(isNaN)) return 0;
 
 	if (parts.length === 3) {
 		// HH:MM:SS
-		return (parts[0] * 3600) + (parts[1] * 60) + parts[2];
+		return parts[0] * 3600 + parts[1] * 60 + parts[2];
 	} else if (parts.length === 2) {
 		// MM:SS
-		return (parts[0] * 60) + parts[1];
+		return parts[0] * 60 + parts[1];
 	}
 	return 0;
 }
@@ -172,7 +175,8 @@ export const useSessionStore = defineStore("session", () => {
 						if (stream === "thoughts") session.thoughts.push(text);
 						if (stream === "room") session.room.push(text);
 						if (stream === "death") session.deaths.push(text);
-						if (stream === "speech" || stream === "talk") session.speech.push(text);
+						if (stream === "speech" || stream === "talk")
+							session.speech.push(text);
 						if (stream === "familiar") session.familiar.push(text);
 
 						// Phase 30 Streams
@@ -198,12 +202,26 @@ export const useSessionStore = defineStore("session", () => {
 				}
 				// 2. Handle Tags
 				else {
-					if (tag.name !== "style" && tag.name !== "pushBold" && tag.name !== "popBold") {
+					if (
+						tag.name !== "style" &&
+						tag.name !== "pushBold" &&
+						tag.name !== "popBold"
+					) {
 						// Enhanced Debug: Show Dialog/Component tags clearly
-						if (tag.name === "dialogData" || tag.name === "component" || tag.name === "label" || tag.name === "dir" || tag.name === "compass") {
-							session.debugLog.push(`[${tag.name}] id=${tag.attributes['id'] || ''} val=${tag.attributes['value'] || ''} text=${tag.text || ''}`);
+						if (
+							tag.name === "dialogData" ||
+							tag.name === "component" ||
+							tag.name === "label" ||
+							tag.name === "dir" ||
+							tag.name === "compass"
+						) {
+							session.debugLog.push(
+								`[${tag.name}] id=${tag.attributes["id"] || ""} val=${tag.attributes["value"] || ""} text=${tag.text || ""}`,
+							);
 						} else {
-							session.debugLog.push(`<${tag.name} ${JSON.stringify(tag.attributes)}>`);
+							session.debugLog.push(
+								`<${tag.name} ${JSON.stringify(tag.attributes)}>`,
+							);
 						}
 
 						if (session.debugLog.length > 200) session.debugLog.shift();
@@ -238,16 +256,40 @@ export const useSessionStore = defineStore("session", () => {
 								const current = Number(match[1]);
 								const max = Number(match[2]);
 
-								if (id === "health") { session.vitals.health = current; session.vitals.maxHealth = max; }
-								if (id === "mana") { session.vitals.mana = current; session.vitals.maxMana = max; }
-								if (id === "spirit") { session.vitals.spirit = current; session.vitals.maxSpirit = max; }
-								if (id === "stamina") { session.vitals.stamina = current; session.vitals.maxStamina = max; }
+								if (id === "health") {
+									session.vitals.health = current;
+									session.vitals.maxHealth = max;
+								}
+								if (id === "mana") {
+									session.vitals.mana = current;
+									session.vitals.maxMana = max;
+								}
+								if (id === "spirit") {
+									session.vitals.spirit = current;
+									session.vitals.maxSpirit = max;
+								}
+								if (id === "stamina") {
+									session.vitals.stamina = current;
+									session.vitals.maxStamina = max;
+								}
 							} else {
 								// Default Handling for non-max bars (Mind, Encumbrance, Stance)
-								if (id === "encumlevel") { session.vitals.encumbrance = value; session.vitals.encumbranceText = text; }
-								if (id === "mindState") { session.vitals.mindState = value; session.vitals.mindText = text; }
-								if (id === "stance") { session.vitals.stance = value; session.vitals.stanceText = text; }
-								if (id === "nextLevel") { session.vitals.nextLevel = value; session.vitals.nextLevelText = text; }
+								if (id === "encumlevel") {
+									session.vitals.encumbrance = value;
+									session.vitals.encumbranceText = text;
+								}
+								if (id === "mindState") {
+									session.vitals.mindState = value;
+									session.vitals.mindText = text;
+								}
+								if (id === "stance") {
+									session.vitals.stance = value;
+									session.vitals.stanceText = text;
+								}
+								if (id === "nextLevel") {
+									session.vitals.nextLevel = value;
+									session.vitals.nextLevelText = text;
+								}
 							}
 						}
 					}
@@ -317,7 +359,7 @@ export const useSessionStore = defineStore("session", () => {
 								left,
 								// Phase 46: Store parsed time for client-side countdown
 								durationSeconds: time ? parseDuration(time) : 0,
-								receivedAt: Date.now()
+								receivedAt: Date.now(),
 							};
 						}
 					}
@@ -331,20 +373,29 @@ export const useSessionStore = defineStore("session", () => {
 						if (id === "lblNone") {
 							// Ignore "No active spells/buffs" labels
 						} else {
-							const value = tag.attributes["value"] || tag.attributes["text"] || tag.text || "";
+							const value =
+								tag.attributes["value"] ||
+								tag.attributes["text"] ||
+								tag.text ||
+								"";
 
 							const top = tag.attributes["top"];
 							const left = tag.attributes["left"];
 
 							// PHASE 40: Granular Debugging
 							// Log raw tags to Debug Window to help diagnose missing names
-							session.debugLog.push(`[SPELL DEBUG] Tag=${tag.name} ID=${id} Val=${value}`);
+							session.debugLog.push(
+								`[SPELL DEBUG] Tag=${tag.name} ID=${id} Val=${value}`,
+							);
 
 							// REMOVED NESTED PROGRESSBAR BLOCK FROM HERE
 
 							// Keep legacy link/label logic as fallback, but progressBar is primary for Spells
 							// If we are in the dialog context, OR the ID starts with "spell" (heuristic for updates)
-							if (tag.name !== "progressBar" && (session.parsingActiveSpells || id.startsWith("spell"))) {
+							if (
+								tag.name !== "progressBar" &&
+								(session.parsingActiveSpells || id.startsWith("spell"))
+							) {
 								// PHASE 39: Spell ID Normalization for Merging
 								// PHASE 39: Spell ID Normalization for Merging
 								// Warlock sends "spellName123" (link) and "spellDuration123" (label).
@@ -361,15 +412,18 @@ export const useSessionStore = defineStore("session", () => {
 								// Update fields based on tag type
 								if (tag.name === "link") {
 									// START LINK: This is the Name (and clickable command)
-									session.activeSpells[normalizedId].text = value || tag.attributes["id"]; // Fallback to ID if no text
+									session.activeSpells[normalizedId].text =
+										value || tag.attributes["id"]; // Fallback to ID if no text
 									if (top) session.activeSpells[normalizedId].top = top;
 									if (left) session.activeSpells[normalizedId].left = left;
 								} else if (tag.name === "label") {
 									// LABEL: This is typically the Duration
 									// Sometimes label also has top/left, but Link is primary for position
 									session.activeSpells[normalizedId].value = value;
-									if (top && !session.activeSpells[normalizedId].top) session.activeSpells[normalizedId].top = top;
-									if (left && !session.activeSpells[normalizedId].left) session.activeSpells[normalizedId].left = left;
+									if (top && !session.activeSpells[normalizedId].top)
+										session.activeSpells[normalizedId].top = top;
+									if (left && !session.activeSpells[normalizedId].left)
+										session.activeSpells[normalizedId].left = left;
 								}
 							}
 						}
@@ -384,14 +438,14 @@ export const useSessionStore = defineStore("session", () => {
 			console.log("Connecting to session:", config.name);
 			await invoke("connect_session", { config });
 
-
 			// Handshake (Request XML Tags)
 			// REMOVED PHASE 42 Handshake to prevent "><c>" artifacts
 			console.log("[Connection] Handshake skipped to prevent artifacts.");
 
 			// Enhanced Logging
-			console.log(`[Connection] Successfully invoked connect_session for ${config.name}`);
-
+			console.log(
+				`[Connection] Successfully invoked connect_session for ${config.name}`,
+			);
 
 			// Initialize Parser
 			parsers.set(config.name, new GameParser());
@@ -445,7 +499,9 @@ export const useSessionStore = defineStore("session", () => {
 				// Suppress handshake echo (Aggressive Phase 40 Check)
 				// Any command containing <c> is suppressed from local echo to prevent artifacts
 				if (!command.includes("<c")) {
-					currentSession.value.feed.push(`<span class="echo">&gt; ${command}</span>`);
+					currentSession.value.feed.push(
+						`<span class="echo">&gt; ${command}</span>`,
+					);
 				}
 			}
 

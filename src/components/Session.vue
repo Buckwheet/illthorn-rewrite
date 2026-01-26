@@ -1,5 +1,13 @@
 <script setup lang="ts">
-import { nextTick, onMounted, onUnmounted, ref, reactive, watch, computed } from "vue";
+import {
+	computed,
+	nextTick,
+	onMounted,
+	onUnmounted,
+	reactive,
+	ref,
+	watch,
+} from "vue";
 import { type Session, useSessionStore } from "../stores/session";
 
 const props = defineProps<{
@@ -19,30 +27,20 @@ const historyIndex = ref(-1);
 const now = ref(Date.now());
 let timerInterval: ReturnType<typeof setInterval> | null = null;
 
-
-
-
-
-
-
-
-
-
-
 const visiblePanels = reactive({
-    thoughts: true,
-    deaths: true,
-    speech: true,
-    familiar: true,
-    room: false,
-    arrivals: false,
-    bounty: false,
-    society: false,
-    ambients: false,
-    announcements: false,
-    loot: false,
-    inv: false,
-    debug: false//
+	thoughts: true,
+	deaths: true,
+	speech: true,
+	familiar: true,
+	room: false,
+	arrivals: false,
+	bounty: false,
+	society: false,
+	ambients: false,
+	announcements: false,
+	loot: false,
+	inv: false,
+	debug: false, //
 });
 
 const roomContainer = ref<HTMLElement | null>(null);
@@ -54,87 +52,114 @@ const announcementsContainer = ref<HTMLElement | null>(null);
 const lootContainer = ref<HTMLElement | null>(null);
 const invContainer = ref<HTMLElement | null>(null);
 
-watch(() => props.session.room.length, () => scrollStream(roomContainer.value));
-watch(() => props.session.arrivals.length, () => scrollStream(arrivalsContainer.value));
-watch(() => props.session.bounty.length, () => scrollStream(bountyContainer.value));
-watch(() => props.session.society.length, () => scrollStream(societyContainer.value));
-watch(() => props.session.ambients.length, () => scrollStream(ambientsContainer.value));
-watch(() => props.session.announcements.length, () => scrollStream(announcementsContainer.value));
-watch(() => props.session.loot.length, () => scrollStream(lootContainer.value));
-watch(() => props.session.invStream.length, () => scrollStream(invContainer.value));
+watch(
+	() => props.session.room.length,
+	() => scrollStream(roomContainer.value),
+);
+watch(
+	() => props.session.arrivals.length,
+	() => scrollStream(arrivalsContainer.value),
+);
+watch(
+	() => props.session.bounty.length,
+	() => scrollStream(bountyContainer.value),
+);
+watch(
+	() => props.session.society.length,
+	() => scrollStream(societyContainer.value),
+);
+watch(
+	() => props.session.ambients.length,
+	() => scrollStream(ambientsContainer.value),
+);
+watch(
+	() => props.session.announcements.length,
+	() => scrollStream(announcementsContainer.value),
+);
+watch(
+	() => props.session.loot.length,
+	() => scrollStream(lootContainer.value),
+);
+watch(
+	() => props.session.invStream.length,
+	() => scrollStream(invContainer.value),
+);
 
 onMounted(() => {
-    console.log("SessionView MOUNTED for", props.session.name);
-    scrollToBottom();
-    
-    // Start Ticker
-    timerInterval = setInterval(() => {
-        now.value = Date.now();
-    }, 1000);
+	console.log("SessionView MOUNTED for", props.session.name);
+	scrollToBottom();
+
+	// Start Ticker
+	timerInterval = setInterval(() => {
+		now.value = Date.now();
+	}, 1000);
 });
 
 onUnmounted(() => {
-    if (timerInterval) clearInterval(timerInterval);
+	if (timerInterval) clearInterval(timerInterval);
 });
 
-
 function formatRemaining(spell: any) {
-    if (!spell.durationSeconds) return spell.value;
-    
-    // Default to value if no receivedAt, but we set it in parser
-    const received = spell.receivedAt || Date.now();
-    const elapsed = Math.floor((now.value - received) / 1000);
-    const remaining = Math.max(0, spell.durationSeconds - elapsed);
-    
-    const h = Math.floor(remaining / 3600);
-    const m = Math.floor((remaining % 3600) / 60);
-    const s = remaining % 60;
-    
-    if (h > 0) {
-        return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-    } else {
-        return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-    }
-}
+	if (!spell.durationSeconds) return spell.value;
 
+	// Default to value if no receivedAt, but we set it in parser
+	const received = spell.receivedAt || Date.now();
+	const elapsed = Math.floor((now.value - received) / 1000);
+	const remaining = Math.max(0, spell.durationSeconds - elapsed);
+
+	const h = Math.floor(remaining / 3600);
+	const m = Math.floor((remaining % 3600) / 60);
+	const s = remaining % 60;
+
+	if (h > 0) {
+		return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+	} else {
+		return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+	}
+}
 
 function send() {
 	if (!commandInput.value) return;
-    
-    // History
-    if (commandHistory.value.length === 0 || commandHistory.value[commandHistory.value.length - 1] !== commandInput.value) {
-        commandHistory.value.push(commandInput.value);
-    }
-    historyIndex.value = -1; // Reset
-    
+
+	// History
+	if (
+		commandHistory.value.length === 0 ||
+		commandHistory.value[commandHistory.value.length - 1] !== commandInput.value
+	) {
+		commandHistory.value.push(commandInput.value);
+	}
+	historyIndex.value = -1; // Reset
+
 	store.sendCommand(commandInput.value);
 	commandInput.value = "";
 }
 
 function sendDir(dir: string) {
-    store.sendCommand(dir);
+	store.sendCommand(dir);
 }
 
-function cycleHistory(direction: 'up' | 'down') {
-    if (commandHistory.value.length === 0) return;
-    
-    if (direction === 'up') {
-        if (historyIndex.value === -1) historyIndex.value = commandHistory.value.length - 1;
-        else if (historyIndex.value > 0) historyIndex.value--;
-    } else {
-        if (historyIndex.value !== -1) {
-            if (historyIndex.value < commandHistory.value.length - 1) historyIndex.value++;
-            else {
-                historyIndex.value = -1;
-                commandInput.value = "";
-                return;
-            }
-        }
-    }
-    
-    if (historyIndex.value !== -1) {
-        commandInput.value = commandHistory.value[historyIndex.value];
-    }
+function cycleHistory(direction: "up" | "down") {
+	if (commandHistory.value.length === 0) return;
+
+	if (direction === "up") {
+		if (historyIndex.value === -1)
+			historyIndex.value = commandHistory.value.length - 1;
+		else if (historyIndex.value > 0) historyIndex.value--;
+	} else {
+		if (historyIndex.value !== -1) {
+			if (historyIndex.value < commandHistory.value.length - 1)
+				historyIndex.value++;
+			else {
+				historyIndex.value = -1;
+				commandInput.value = "";
+				return;
+			}
+		}
+	}
+
+	if (historyIndex.value !== -1) {
+		commandInput.value = commandHistory.value[historyIndex.value];
+	}
 }
 
 function scrollToBottom() {
@@ -154,75 +179,84 @@ function scrollStream(container: HTMLElement | null) {
 }
 
 watch(() => props.session.feed.length, scrollToBottom);
-watch(() => props.session.thoughts.length, () => scrollStream(thoughtsContainer.value));
-watch(() => props.session.speech.length, () => scrollStream(speechContainer.value));
-watch(() => props.session.familiar.length, () => scrollStream(familiarContainer.value));
+watch(
+	() => props.session.thoughts.length,
+	() => scrollStream(thoughtsContainer.value),
+);
+watch(
+	() => props.session.speech.length,
+	() => scrollStream(speechContainer.value),
+);
+watch(
+	() => props.session.familiar.length,
+	() => scrollStream(familiarContainer.value),
+);
 const collapsedPanels = reactive(new Set<string>());
 
 function toggleCollapse(panelName: string) {
-    if (collapsedPanels.has(panelName)) collapsedPanels.delete(panelName);
-    else collapsedPanels.add(panelName);
+	if (collapsedPanels.has(panelName)) collapsedPanels.delete(panelName);
+	else collapsedPanels.add(panelName);
 }
 
 const sortedSpellRows = computed(() => {
-    const spells = Object.values(props.session.activeSpells);
-    if (spells.length === 0) return [];
+	const spells = Object.values(props.session.activeSpells);
+	if (spells.length === 0) return [];
 
-    // Group by 'top' coordinate (fuzzy match within 5 pixels)
-    const rows: Record<string, typeof spells> = {};
-    const processed = new Set<string>();
+	// Group by 'top' coordinate (fuzzy match within 5 pixels)
+	const rows: Record<string, typeof spells> = {};
+	const processed = new Set<string>();
 
-    spells.forEach(s => {
-        if (processed.has(s.value + s.top)) return; // Simple dedup (optional)
+	spells.forEach((s) => {
+		if (processed.has(s.value + s.top)) return; // Simple dedup (optional)
 
-        const rawTop = s.top ? parseInt(s.top) : null;
-        let topKey = 'unknown';
+		const rawTop = s.top ? parseInt(s.top) : null;
+		let topKey = "unknown";
 
-        if (rawTop !== null) {
-            // Check existing keys for a fuzzy match
-            const existingKey = Object.keys(rows).find(k => {
-                if (k === 'unknown') return false;
-                return Math.abs(parseInt(k) - rawTop) <= 5;
-            });
-            topKey = existingKey || rawTop.toString();
-        }
+		if (rawTop !== null) {
+			// Check existing keys for a fuzzy match
+			const existingKey = Object.keys(rows).find((k) => {
+				if (k === "unknown") return false;
+				return Math.abs(parseInt(k) - rawTop) <= 5;
+			});
+			topKey = existingKey || rawTop.toString();
+		}
 
-        if (!rows[topKey]) rows[topKey] = [];
-        rows[topKey].push(s);
-    });
+		if (!rows[topKey]) rows[topKey] = [];
+		rows[topKey].push(s);
+	});
 
-    // Sort rows by Top
-    const sortedKeys = Object.keys(rows).sort((a, b) => {
-        if (a === 'unknown') return 1;
-        if (b === 'unknown') return -1;
-        return parseInt(a) - parseInt(b);
-    });
+	// Sort rows by Top
+	const sortedKeys = Object.keys(rows).sort((a, b) => {
+		if (a === "unknown") return 1;
+		if (b === "unknown") return -1;
+		return parseInt(a) - parseInt(b);
+	});
 
-    // Valid rows, sorted by Left
-    return sortedKeys.map(k => {
-        return rows[k].sort((a, b) => {
-             const la = a.left ? parseInt(a.left) : 0;
-             const lb = b.left ? parseInt(b.left) : 0;
-             return la - lb;
-        });
-    });
+	// Valid rows, sorted by Left
+	return sortedKeys.map((k) => {
+		return rows[k].sort((a, b) => {
+			const la = a.left ? parseInt(a.left) : 0;
+			const lb = b.left ? parseInt(b.left) : 0;
+			return la - lb;
+		});
+	});
 });
 
 async function dumpSpells() {
-    console.log("=== ACTIVE SPELLS DUMP ===");
-    const content = JSON.stringify(props.session.activeSpells, null, 2);
-    console.log(content);
-    
-    // Phase 43: Save to File
-    try {
-        // We use invoke directly here since it's a one-off debug command not in store
-        const { invoke } = await import('@tauri-apps/api/core');
-        const path = await invoke('save_debug_log', { content });
-        props.session.debugLog.push(`Saved log to: ${path}`);
-    } catch (e: any) {
-        props.session.debugLog.push(`Failed to save log: ${e}`);
-        console.error(e);
-    }
+	console.log("=== ACTIVE SPELLS DUMP ===");
+	const content = JSON.stringify(props.session.activeSpells, null, 2);
+	console.log(content);
+
+	// Phase 43: Save to File
+	try {
+		// We use invoke directly here since it's a one-off debug command not in store
+		const { invoke } = await import("@tauri-apps/api/core");
+		const path = await invoke("save_debug_log", { content });
+		props.session.debugLog.push(`Saved log to: ${path}`);
+	} catch (e: any) {
+		props.session.debugLog.push(`Failed to save log: ${e}`);
+		console.error(e);
+	}
 }
 </script>
 

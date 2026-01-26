@@ -107,7 +107,11 @@ export class GameParser {
 
 		tags.push({
 			name: ":text",
-			attributes: { stream, style: styleClass, component: this.componentId || "" },
+			attributes: {
+				stream,
+				style: styleClass,
+				component: this.componentId || "",
+			},
 			text: processedEscaped,
 		});
 	}
@@ -173,7 +177,6 @@ export class GameParser {
 			attributes[key] = value;
 			match = attrRegex.exec(attrString);
 		}
-
 
 		// Handle State Logic (Streams)
 		// Standard StormFront uses pushStream/popStream
