@@ -23,7 +23,7 @@ async fn connect_session(
 
     // Connect (async, no lock held)
     let session = Session::connect(config.clone(), app).await?;
-    
+
     // Insert session (re-acquire lock)
     {
         let mut sessions = state.0.lock().map_err(|e| e.to_string())?;
@@ -44,7 +44,10 @@ async fn send_command(
     // Get session (scope the lock)
     let sess = {
         let sessions = state.0.lock().map_err(|e| e.to_string())?;
-        sessions.get(&session).cloned().ok_or_else(|| format!("Session {} not found", session))?
+        sessions
+            .get(&session)
+            .cloned()
+            .ok_or_else(|| format!("Session {} not found", session))?
     };
 
     // Send command (async, no lock held)
@@ -60,7 +63,10 @@ async fn send_raw_command(
 ) -> Result<(), String> {
     let sess = {
         let sessions = state.0.lock().map_err(|e| e.to_string())?;
-        sessions.get(&session).cloned().ok_or_else(|| format!("Session {} not found", session))?
+        sessions
+            .get(&session)
+            .cloned()
+            .ok_or_else(|| format!("Session {} not found", session))?
     };
 
     sess.send_bytes(command.into_bytes()).await?;
@@ -68,10 +74,7 @@ async fn send_raw_command(
 }
 
 #[tauri::command]
-async fn disconnect_session(
-    name: String,
-    state: State<'_, SessionState>,
-) -> Result<(), String> {
+async fn disconnect_session(name: String, state: State<'_, SessionState>) -> Result<(), String> {
     let session = {
         let mut sessions = state.0.lock().map_err(|e| e.to_string())?;
         sessions.remove(&name)
@@ -95,14 +98,14 @@ async fn list_sessions() -> Result<Vec<session::SessionConfig>, String> {
 
 mod discovery {
     use crate::session::SessionConfig;
-    use std::path::PathBuf;
     use std::fs;
-    
+    use std::path::PathBuf;
+
     // Reads %TMP%/simutronics/sessions
     pub async fn scan_sessions() -> Result<Vec<SessionConfig>, String> {
         let temp_dir = std::env::temp_dir();
         let session_dir = temp_dir.join("simutronics").join("sessions");
-        
+
         if !session_dir.exists() {
             return Ok(vec![]);
         }
@@ -115,34 +118,38 @@ mod discovery {
             let path = path.map_err(|e| e.to_string())?.path();
             if let Some(ext) = path.extension().and_then(|s| s.to_str()) {
                 if ext == "json" || ext == "session" {
-                     let content = fs::read_to_string(&path).map_err(|e| e.to_string())?;
-                 // ... parsing ...
-                 #[derive(serde::Deserialize)]
-                 struct LegacyConfig {
-                     name: String,
-                     port: u16,
-                 }
-                 
-                 if let Ok(legacy) = serde_json::from_str::<LegacyConfig>(&content) {
-                     configs.push(SessionConfig {
-                         name: legacy.name,
-                         port: legacy.port,
-                         host: "127.0.0.1".to_string(),
-                     });
-                 }
-            }
+                    let content = fs::read_to_string(&path).map_err(|e| e.to_string())?;
+                    // ... parsing ...
+                    #[derive(serde::Deserialize)]
+                    struct LegacyConfig {
+                        name: String,
+                        port: u16,
+                    }
+
+                    if let Ok(legacy) = serde_json::from_str::<LegacyConfig>(&content) {
+                        configs.push(SessionConfig {
+                            name: legacy.name,
+                            port: legacy.port,
+                            host: "127.0.0.1".to_string(),
+                        });
+                    }
+                }
             }
         }
-        
+
         Ok(configs)
     }
 
     pub async fn get_diagnostics() -> String {
         let temp_dir = std::env::temp_dir();
         let session_dir = temp_dir.join("simutronics").join("sessions");
-        
-        let mut report = format!("Temp Dir: {:?}\\nSession Dir: {:?}\\nExists: {}\\n", 
-            temp_dir, session_dir, session_dir.exists());
+
+        let mut report = format!(
+            "Temp Dir: {:?}\\nSession Dir: {:?}\\nExists: {}\\n",
+            temp_dir,
+            session_dir,
+            session_dir.exists()
+        );
 
         if let Ok(entries) = fs::read_dir(&session_dir) {
             report.push_str("Files found:\\n");
@@ -154,7 +161,7 @@ mod discovery {
         } else {
             report.push_str("Could not read directory (Permission/IO Error)\\n");
         }
-        
+
         report
     }
 }
@@ -162,6 +169,39 @@ mod discovery {
 #[tauri::command]
 async fn debug_diagnostics() -> String {
     discovery::get_diagnostics().await
+}
+
+#[tauri::command]
+async fn save_debug_log(content: String) -> Result<String, String> {
+    use std::io::Write;
+    use std::path::PathBuf;
+
+    let user_profile = std::env::var("USERPROFILE").map_err(|e| e.to_string())?;
+    let profile_path = std::path::Path::new(&user_profile);
+
+    // Desktop Fallback Logic
+    let mut target_dir = profile_path.join("Desktop");
+
+    // Check standard Desktop
+    if !target_dir.exists() {
+        // Check OneDrive Desktop
+        let onedrive = profile_path.join("OneDrive").join("Desktop");
+        if onedrive.exists() {
+            target_dir = onedrive;
+        } else {
+            // Fallback to Profile Root if neither Desktop exists (unlikely but safe)
+            target_dir = profile_path.to_path_buf();
+        }
+    }
+
+    let path = target_dir.join("illthorn-debug.log");
+
+    let mut file = std::fs::File::create(&path)
+        .map_err(|e| format!("Failed to create file at {:?}: {}", path, e))?;
+    file.write_all(content.as_bytes())
+        .map_err(|e| e.to_string())?;
+
+    Ok(path.to_string_lossy().to_string())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -175,7 +215,8 @@ pub fn run() {
             send_raw_command,
             disconnect_session,
             list_sessions,
-            debug_diagnostics
+            debug_diagnostics,
+            save_debug_log
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

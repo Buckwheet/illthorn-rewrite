@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, onMounted, ref, reactive, watch, computed } from "vue";
+import { nextTick, onMounted, onUnmounted, ref, reactive, watch, computed } from "vue";
 import { type Session, useSessionStore } from "../stores/session";
 
 const props = defineProps<{
@@ -14,6 +14,20 @@ const speechContainer = ref<HTMLElement | null>(null);
 const familiarContainer = ref<HTMLElement | null>(null);
 const commandHistory = ref<string[]>([]);
 const historyIndex = ref(-1);
+
+// Phase 46: Timer Ticker
+const now = ref(Date.now());
+let timerInterval: ReturnType<typeof setInterval> | null = null;
+
+
+
+
+
+
+
+
+
+
 
 const visiblePanels = reactive({
     thoughts: true,
@@ -52,7 +66,37 @@ watch(() => props.session.invStream.length, () => scrollStream(invContainer.valu
 onMounted(() => {
     console.log("SessionView MOUNTED for", props.session.name);
     scrollToBottom();
+    
+    // Start Ticker
+    timerInterval = setInterval(() => {
+        now.value = Date.now();
+    }, 1000);
 });
+
+onUnmounted(() => {
+    if (timerInterval) clearInterval(timerInterval);
+});
+
+
+function formatRemaining(spell: any) {
+    if (!spell.durationSeconds) return spell.value;
+    
+    // Default to value if no receivedAt, but we set it in parser
+    const received = spell.receivedAt || Date.now();
+    const elapsed = Math.floor((now.value - received) / 1000);
+    const remaining = Math.max(0, spell.durationSeconds - elapsed);
+    
+    const h = Math.floor(remaining / 3600);
+    const m = Math.floor((remaining % 3600) / 60);
+    const s = remaining % 60;
+    
+    if (h > 0) {
+        return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    } else {
+        return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+    }
+}
+
 
 function send() {
 	if (!commandInput.value) return;
@@ -164,10 +208,21 @@ const sortedSpellRows = computed(() => {
     });
 });
 
-function dumpSpells() {
+async function dumpSpells() {
     console.log("=== ACTIVE SPELLS DUMP ===");
-    console.log(JSON.stringify(props.session.activeSpells, null, 2));
-    props.session.debugLog.push("Dumped Active Spells to Console (F12)");
+    const content = JSON.stringify(props.session.activeSpells, null, 2);
+    console.log(content);
+    
+    // Phase 43: Save to File
+    try {
+        // We use invoke directly here since it's a one-off debug command not in store
+        const { invoke } = await import('@tauri-apps/api/core');
+        const path = await invoke('save_debug_log', { content });
+        props.session.debugLog.push(`Saved log to: ${path}`);
+    } catch (e: any) {
+        props.session.debugLog.push(`Failed to save log: ${e}`);
+        console.error(e);
+    }
 }
 </script>
 
@@ -234,7 +289,13 @@ function dumpSpells() {
 						<div v-if="Object.keys(session.activeSpells).length === 0" class="empty">None</div>
 						<div v-else class="spell-list">
 							<div v-for="(row, i) in sortedSpellRows" :key="i" class="spell-row">
-								<span v-for="(spell, j) in row" :key="j" class="spell-cell" :class="{ 'align-right': j === row.length - 1 }">{{ spell.value }}</span>
+								<span v-for="(spell, j) in row" :key="j" class="spell-cell" :class="{ 'align-right': j === row.length - 1 }">
+                                    <span class="spell-name" v-if="spell.text">{{ spell.text }}</span>
+                                    <span class="spell-dots" v-if="spell.text"> .................... </span>
+                                    <span class="spell-name" v-if="spell.text">{{ spell.text }}</span>
+                                    <span class="spell-dots" v-if="spell.text"> .................... </span>
+                                    <span class="spell-time">{{ formatRemaining(spell) }}</span>
+                                </span>
 							</div>
 						</div>
          </div>
@@ -415,8 +476,15 @@ function dumpSpells() {
   background: #1e1e1e;
   overflow-y: auto;
   min-width: 250px; /* Ensure visual width */
+  width: 320px; /* Phase 43: Default starting width */
   resize: horizontal; /* Phase 37: Resizable HUD */
   overflow-x: hidden; /* Hide scrollbar caused by generic resize handle if any */
+}
+
+/* Phase 43: Enable inner scrolling for panels to prevent HUD explosion */
+.panel-content {
+    max-height: 40vh; /* Cap height to prevent pushing other panels off */
+    overflow-y: auto; /* Enable scrollbar */
 }
 
 .main {
@@ -551,9 +619,7 @@ function dumpSpells() {
     padding: 1px 5px;
     border-bottom: 1px solid #222;
 }
-.spell-cell {
-    
-}
+
 .spell-cell.align-right {
     text-align: right;
     margin-left: auto; /* Push to right */

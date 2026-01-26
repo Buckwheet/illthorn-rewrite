@@ -49,7 +49,15 @@ export interface Session {
 	deaths: string[];
 	speech: string[];
 	familiar: string[];
-	activeSpells: Record<string, { text: string; value: string; top?: string; left?: string; }>; // ID -> Content
+	activeSpells: Record<string, {
+		text: string;
+		value: string;
+		top?: string;
+		left?: string;
+		// Phase 46: Timer Fields
+		durationSeconds?: number;
+		receivedAt?: number;
+	}>; // ID -> Content
 	exits: string[]; // ['n', 's', 'out', ...]
 
 	// New Phase 30 Streams
@@ -97,6 +105,21 @@ const defaultHands: Hands = {
 	right: "Empty",
 	spell: "None"
 };
+
+// Phase 46: Helper to parse "HH:MM:SS" or "MM:SS" into seconds
+function parseDuration(timeStr: string): number {
+	const parts = timeStr.trim().split(':').map(Number);
+	if (parts.some(isNaN)) return 0;
+
+	if (parts.length === 3) {
+		// HH:MM:SS
+		return (parts[0] * 3600) + (parts[1] * 60) + parts[2];
+	} else if (parts.length === 2) {
+		// MM:SS
+		return (parts[0] * 60) + parts[1];
+	}
+	return 0;
+}
 
 export const useSessionStore = defineStore("session", () => {
 	// Reactive state for UI
@@ -277,48 +300,77 @@ export const useSessionStore = defineStore("session", () => {
 					}
 
 					// Capture ANY label OR LINK (clickable text) if we are inside the Active Spells dialog
+					// PHASE 44: MOVED OUTSIDE of isLabel/isLink check!
+					// Warlock3 sends Active Spells as <progressBar> tags containing BOTH name and time.
+					if (tag.name === "progressBar" && session.parsingActiveSpells) {
+						const id = tag.attributes["id"];
+						const text = tag.attributes["text"]; // Spell Name
+						const time = tag.attributes["time"]; // Duration
+						const top = tag.attributes["top"];
+						const left = tag.attributes["left"];
+
+						if (id && text) {
+							session.activeSpells[id] = {
+								text: text,
+								value: time || "",
+								top,
+								left,
+								// Phase 46: Store parsed time for client-side countdown
+								durationSeconds: time ? parseDuration(time) : 0,
+								receivedAt: Date.now()
+							};
+						}
+					}
+
 					// Warlock3 uses <link> for the spell name and <label> for the time
 					const isLabel = tag.name === "label" && tag.attributes["id"];
 					const isLink = tag.name === "link" && tag.attributes["id"];
 
 					if (isLabel || isLink) {
 						const id = tag.attributes["id"];
-						const value = tag.attributes["value"] || tag.attributes["text"] || tag.text || "";
+						if (id === "lblNone") {
+							// Ignore "No active spells/buffs" labels
+						} else {
+							const value = tag.attributes["value"] || tag.attributes["text"] || tag.text || "";
 
-						const top = tag.attributes["top"];
-						const left = tag.attributes["left"];
+							const top = tag.attributes["top"];
+							const left = tag.attributes["left"];
 
-						// PHASE 40: Granular Debugging
-						// Log raw tags to Debug Window to help diagnose missing names
-						session.debugLog.push(`[SPELL DEBUG] Tag=${tag.name} ID=${id} Val=${value}`);
+							// PHASE 40: Granular Debugging
+							// Log raw tags to Debug Window to help diagnose missing names
+							session.debugLog.push(`[SPELL DEBUG] Tag=${tag.name} ID=${id} Val=${value}`);
 
-						// If we are in the dialog context, OR the ID starts with "spell" (heuristic for updates)
-						if (session.parsingActiveSpells || id.startsWith("spell")) {
-							// PHASE 39: Spell ID Normalization for Merging
-							// PHASE 39: Spell ID Normalization for Merging
-							// Warlock sends "spellName123" (link) and "spellDuration123" (label).
-							// We need to strip "Name" or "Duration" to merge them into "spell123".
-							let normalizedId = id;
-							normalizedId = normalizedId.replace("Name", "");
-							normalizedId = normalizedId.replace("Duration", "");
+							// REMOVED NESTED PROGRESSBAR BLOCK FROM HERE
 
-							// Initialize if missing
-							if (!session.activeSpells[normalizedId]) {
-								session.activeSpells[normalizedId] = { text: "", value: "" };
-							}
+							// Keep legacy link/label logic as fallback, but progressBar is primary for Spells
+							// If we are in the dialog context, OR the ID starts with "spell" (heuristic for updates)
+							if (tag.name !== "progressBar" && (session.parsingActiveSpells || id.startsWith("spell"))) {
+								// PHASE 39: Spell ID Normalization for Merging
+								// PHASE 39: Spell ID Normalization for Merging
+								// Warlock sends "spellName123" (link) and "spellDuration123" (label).
+								// We need to strip "Name" or "Duration" to merge them into "spell123".
+								let normalizedId = id;
+								normalizedId = normalizedId.replace("Name", "");
+								normalizedId = normalizedId.replace("Duration", "");
 
-							// Update fields based on tag type
-							if (tag.name === "link") {
-								// START LINK: This is the Name (and clickable command)
-								session.activeSpells[normalizedId].text = value || tag.attributes["id"]; // Fallback to ID if no text
-								if (top) session.activeSpells[normalizedId].top = top;
-								if (left) session.activeSpells[normalizedId].left = left;
-							} else if (tag.name === "label") {
-								// LABEL: This is typically the Duration
-								// Sometimes label also has top/left, but Link is primary for position
-								session.activeSpells[normalizedId].value = value;
-								if (top && !session.activeSpells[normalizedId].top) session.activeSpells[normalizedId].top = top;
-								if (left && !session.activeSpells[normalizedId].left) session.activeSpells[normalizedId].left = left;
+								// Initialize if missing
+								if (!session.activeSpells[normalizedId]) {
+									session.activeSpells[normalizedId] = { text: "", value: "" };
+								}
+
+								// Update fields based on tag type
+								if (tag.name === "link") {
+									// START LINK: This is the Name (and clickable command)
+									session.activeSpells[normalizedId].text = value || tag.attributes["id"]; // Fallback to ID if no text
+									if (top) session.activeSpells[normalizedId].top = top;
+									if (left) session.activeSpells[normalizedId].left = left;
+								} else if (tag.name === "label") {
+									// LABEL: This is typically the Duration
+									// Sometimes label also has top/left, but Link is primary for position
+									session.activeSpells[normalizedId].value = value;
+									if (top && !session.activeSpells[normalizedId].top) session.activeSpells[normalizedId].top = top;
+									if (left && !session.activeSpells[normalizedId].left) session.activeSpells[normalizedId].left = left;
+								}
 							}
 						}
 					}
@@ -334,10 +386,11 @@ export const useSessionStore = defineStore("session", () => {
 
 
 			// Handshake (Request XML Tags)
-			// Use send_raw_command to ensure exact bytes are sent
-			// RESTORED \r\n because generic <c> without newline causes buffer merge with next command (e.g. <c>look)
-			console.log("Sending handshake <c>");
-			invoke("send_raw_command", { session: config.name, command: "<c>\r\n" });
+			// REMOVED PHASE 42 Handshake to prevent "><c>" artifacts
+			console.log("[Connection] Handshake skipped to prevent artifacts.");
+
+			// Enhanced Logging
+			console.log(`[Connection] Successfully invoked connect_session for ${config.name}`);
 
 
 			// Initialize Parser
