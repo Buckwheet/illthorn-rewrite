@@ -7,14 +7,14 @@ import { useSessionStore } from "./stores/session";
 
 const sessionStore = useSessionStore();
 const showConnectionModal = ref(false);
-const lastError = ref<any>(null);
+const lastError = ref<string | null>(null);
 const contextRef = ref<HTMLElement | null>(null);
 const contextDims = ref({ w: 0, h: 0 });
 const showSidebar = ref(true);
 
 onErrorCaptured((err, _instance, info) => {
 	console.error("Captured Error:", err);
-	lastError.value = err?.toString() + " (" + info + ")";
+	lastError.value = `${err?.toString()} (${info})`;
 	return false;
 });
 
@@ -43,11 +43,11 @@ function handleGlobalKey(e: KeyboardEvent) {
 
 	// Alt + Number
 	if (e.altKey && e.key >= "1" && e.key <= "9") {
-		index = parseInt(e.key) - 1;
+		index = parseInt(e.key, 10) - 1;
 	}
 	// F-keys (F1-F12)
 	else if (e.key.startsWith("F") && e.key.length > 1) {
-		const fNum = parseInt(e.key.substring(1));
+		const fNum = parseInt(e.key.substring(1), 10);
 		if (!Number.isNaN(fNum)) {
 			index = fNum - 1;
 		}
