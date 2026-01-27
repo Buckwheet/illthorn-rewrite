@@ -241,9 +241,8 @@ fn cleanup_sessions(app_handle: &AppHandle) {
             if !active_sessions.is_empty() {
                 tauri::async_runtime::block_on(async move {
                     for session in active_sessions {
-                        // Send 'quit' to politely tell server to stop sending data (reducing RST risk)
-                        let _ = session.send("quit".to_string()).await;
-                        // Close the write side of the socket (FIN)
+                        // Just close the write side of the socket (FIN)
+                        // Sending 'quit' logs the user out of the game, which is not desired.
                         let _ = session.disconnect().await;
                     }
                 });
