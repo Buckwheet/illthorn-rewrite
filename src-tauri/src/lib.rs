@@ -220,7 +220,7 @@ pub fn run() {
         ])
         .setup(|app| {
             let app_handle = app.handle().clone();
-            app.listen("tauri://window-created", move |_| {
+            app_handle.listen("tauri://window-created", move |_| {
                 // unused for now
             });
             Ok(())
@@ -228,17 +228,11 @@ pub fn run() {
         .build(tauri::generate_context!())
         .expect("error while running tauri application")
         .run(|app_handle, event| match event {
-            tauri::RunEvent::ExitRequested { api, .. } => {
-                // We can intercept exit here if needed, but managing async disconnection in sync callback is hard.
-                // Best effort: rely on Drop or explicit session management before this point.
-                // HOWEVER, for this specific "Forcibly Closed" issue, we need to try and close sockets.
-
-                // Ideally, we start a new runtime to block on close:
-                let state = app_handle.state::<SessionState>();
+            tauri::RunEvent::ExitRequested { api: _api, .. } => {
+                let app_handle = app_handle.clone();
+                let state: State<SessionState> = app_handle.state::<SessionState>();
                 if let Ok(mut sessions) = state.0.lock() {
-                    // Explicitly type the map to fix inference issues
-                    let map: &mut HashMap<String, Session> = &mut sessions;
-                    map.clear();
+                    sessions.clear();
                 }
             }
             _ => {}
