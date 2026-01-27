@@ -229,11 +229,16 @@ pub fn run() {
         .expect("error while running tauri application")
         .run(|app_handle, event| match event {
             tauri::RunEvent::ExitRequested { api: _api, .. } => {
-                let state = app_handle.state::<SessionState>();
-                if let Ok(mut sessions) = state.0.lock() {
-                    sessions.clear();
-                }
+                cleanup_sessions(app_handle);
             }
             _ => {}
         });
+}
+
+fn cleanup_sessions(app_handle: &AppHandle) {
+    if let Some(state) = app_handle.try_state::<SessionState>() {
+        if let Ok(mut sessions) = state.0.lock() {
+            sessions.clear();
+        }
+    }
 }
