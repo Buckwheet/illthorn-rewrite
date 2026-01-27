@@ -199,6 +199,45 @@ export const useSessionStore = defineStore("session", () => {
 					if (session.activeHand && text.trim()) {
 						session.hands[session.activeHand] = text.trim();
 					}
+
+					// C. Fallback Exit Parsing (Text-Based)
+					// Matches "Obvious paths: north, east, south, west"
+					if (text.match(/Obvious (paths|exits):/i)) {
+						// Only clear if we found a paths line, assuming this is authoritative for the room
+						// session.exits = []; // Optional: Decide if we want to wipe previous XML compass data. 
+						// Usually text comes WITH XML, so maybe we append or merge? 
+						// Let's merge to be safe, but unique.
+
+						const longDirToShort: Record<string, string> = {
+							north: "n",
+							northeast: "ne",
+							east: "e",
+							southeast: "se",
+							south: "s",
+							southwest: "sw",
+							west: "w",
+							northwest: "nw",
+							out: "out",
+							up: "up",
+							down: "down",
+						};
+
+						// Extract all known direction words
+						const foundDirs = text.match(/\b(north|northeast|east|southeast|south|southwest|west|northwest|out|up|down)\b/gi);
+
+						if (foundDirs) {
+							// Found new exits line, so we should likely clear the old state to be accurate
+							session.exits = [];
+
+							// If we found exits in text, ensure we have them in our list
+							foundDirs.forEach((dir: string) => {
+								const short = longDirToShort[dir.toLowerCase()];
+								if (short && !session.exits.includes(short)) {
+									session.exits.push(short);
+								}
+							});
+						}
+					}
 				}
 				// 2. Handle Tags
 				else {
