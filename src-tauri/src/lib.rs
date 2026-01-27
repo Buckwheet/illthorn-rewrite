@@ -229,8 +229,7 @@ pub fn run() {
         .expect("error while running tauri application")
         .run(|app_handle, event| match event {
             tauri::RunEvent::ExitRequested { api: _api, .. } => {
-                let app_handle = app_handle.clone();
-                let state: State<SessionState> = app_handle.state::<SessionState>();
+                let state = app_handle.state::<SessionState>();
                 if let Ok(mut sessions) = state.0.lock() {
                     sessions.clear();
                 }
