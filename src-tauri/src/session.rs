@@ -20,8 +20,27 @@ pub struct Session {
 impl Session {
     pub async fn connect(config: SessionConfig, app: AppHandle) -> Result<Self, String> {
         let addr = format!("{}:{}", config.host, config.port);
-        let stream = TcpStream::connect(&addr).await.map_err(|e| e.to_string())?;
-        stream.set_nodelay(true).map_err(|e| e.to_string())?;
+
+        // Use std::net::TcpStream for synchronous setup of socket options
+        // This allows us to set SO_LINGER which is not directly exposed on Tokio's stream
+        let std_stream = std::net::TcpStream::connect(&addr).map_err(|e| e.to_string())?;
+
+        // Set NoDelay to true (disable Nagle's algorithm) for lower latency
+        std_stream.set_nodelay(true).map_err(|e| e.to_string())?;
+
+        // Set Linger to ensure data is flushed before closing, preventing "forcibly closed" (RST) errors
+        // A timeout of 2 seconds should be sufficient for the OS to flush buffers on close.
+        std_stream
+            .set_linger(Some(std::time::Duration::from_secs(2)))
+            .map_err(|e| e.to_string())?;
+
+        // Set non-blocking mode required for Tokio
+        std_stream
+            .set_nonblocking(true)
+            .map_err(|e| e.to_string())?;
+
+        // Convert to Tokio TcpStream
+        let stream = TcpStream::from_std(std_stream).map_err(|e| e.to_string())?;
 
         let (mut reader, writer) = tokio::io::split(stream);
         let name = config.name.clone();
@@ -38,8 +57,6 @@ impl Session {
                     Ok(n) => {
                         let data = String::from_utf8_lossy(&buf[..n]);
                         // Emit event to frontend
-                        // We use a specific event name format: "session_name/data" or similar
-                        // Identifying the session in the payload is cleaner.
                         let _ = app.emit(
                             "session-data",
                             serde_json::json!({
