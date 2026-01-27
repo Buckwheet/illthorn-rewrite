@@ -238,6 +238,18 @@ pub fn run() {
 fn cleanup_sessions(app_handle: &AppHandle) {
     if let Some(state) = app_handle.try_state::<SessionState>() {
         if let Ok(mut sessions) = state.0.lock() {
+            let active_sessions: Vec<Session> = sessions.values().cloned().collect();
+
+            if !active_sessions.is_empty() {
+                tauri::async_runtime::block_on(async move {
+                    for session in active_sessions {
+                        // Send 'quit' to politely tell server to stop sending data (reducing RST risk)
+                        let _ = session.send("quit".to_string()).await;
+                        // Close the write side of the socket (FIN)
+                        let _ = session.disconnect().await;
+                    }
+                });
+            }
             sessions.clear();
         }
     }
