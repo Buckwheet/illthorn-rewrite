@@ -13,6 +13,7 @@ pub struct SessionConfig {
 
 #[derive(Clone)]
 pub struct Session {
+    #[allow(dead_code)]
     pub config: SessionConfig,
     pub writer: Arc<Mutex<WriteHalf<TcpStream>>>,
 }

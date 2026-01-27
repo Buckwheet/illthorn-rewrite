@@ -99,7 +99,6 @@ async fn list_sessions() -> Result<Vec<session::SessionConfig>, String> {
 mod discovery {
     use crate::session::SessionConfig;
     use std::fs;
-    use std::path::PathBuf;
 
     // Reads %TMP%/simutronics/sessions
     pub async fn scan_sessions() -> Result<Vec<SessionConfig>, String> {
@@ -174,7 +173,6 @@ async fn debug_diagnostics() -> String {
 #[tauri::command]
 async fn save_debug_log(content: String) -> Result<String, String> {
     use std::io::Write;
-    use std::path::PathBuf;
 
     let user_profile = std::env::var("USERPROFILE").map_err(|e| e.to_string())?;
     let profile_path = std::path::Path::new(&user_profile);
