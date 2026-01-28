@@ -32,6 +32,19 @@ By leveraging **Rust** for the backend (via Tauri), we achieve minimal resource 
 - **Active Spell Tracking**: Real-time display of active spells and effects.
 - **Modern UI**: Dark mode, customizable panels, and familiar layout.
 
+
+## Prerequisites
+*   **Lich**: You must have Lich installed and running for GemStone IV.
+*   **Headless Client**: Illthorn connects to Lich as a frontend. Run Lich in headless mode:
+    ```bash
+    # Standard Lich (Ruby)
+    ruby lich.rb --login <CharacterName> --without-frontend --detachable-client=11024
+    
+    # Lich 5 (if applicable)
+    ./lich.rb --login <CharacterName> --without-frontend --detachable-client=11024
+    ```
+    *Note: Port 11024 is the default for Illthorn/Vellum.*
+
 ## Installation
 **Download the latest release from the [Releases Page](https://github.com/Buckwheet/illthorn-rewrite/releases).**
 
