@@ -1,20 +1,19 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import { useSessionStore } from '../stores/session';
-
+import { computed } from "vue";
+import { useSessionStore } from "../stores/session";
 
 const store = useSessionStore();
 const session = computed(() => store.currentSession);
 
 // Map injury levels to CSS classes
 const getInjuryClass = (part: string) => {
-  if (!session.value) return '';
-  const level = session.value.injuries[part] || 0;
-  if (level === 0) return '';
-  
-  if (level >= 1 && level <= 3) return `injury-${level}`;
-  if (level >= 4 && level <= 6) return `scar-${level - 3}`;
-  return '';
+	if (!session.value) return "";
+	const level = session.value.injuries[part] || 0;
+	if (level === 0) return "";
+
+	if (level >= 1 && level <= 3) return `injury-${level}`;
+	if (level >= 4 && level <= 6) return `scar-${level - 3}`;
+	return "";
 };
 
 // We need to inject the classes into the SVG.

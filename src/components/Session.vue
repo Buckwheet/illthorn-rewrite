@@ -8,7 +8,11 @@ import {
 	ref,
 	watch,
 } from "vue";
-import { type ActiveSpell, type Session, useSessionStore } from "../stores/session";
+import {
+	type ActiveSpell,
+	type Session,
+	useSessionStore,
+} from "../stores/session";
 import InjuryPanel from "./InjuryPanel.vue";
 
 const props = defineProps<{

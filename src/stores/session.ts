@@ -414,10 +414,7 @@ export const useSessionStore = defineStore("session", () => {
 							// Ignore "No active spells/buffs" labels
 						} else {
 							const value =
-								tag.attributes.value ||
-								tag.attributes.text ||
-								tag.text ||
-								"";
+								tag.attributes.value || tag.attributes.text || tag.text || "";
 
 							// const top = tag.attributes.top;
 							// const left = tag.attributes.left;
