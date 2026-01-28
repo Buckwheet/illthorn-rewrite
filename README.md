@@ -32,12 +32,31 @@ By leveraging **Rust** for the backend (via Tauri), we achieve minimal resource 
 - **Active Spell Tracking**: Real-time display of active spells and effects.
 - **Modern UI**: Dark mode, customizable panels, and familiar layout.
 
+## Installation
+**Download the latest release from the [Releases Page](https://github.com/Buckwheet/illthorn-rewrite/releases).**
+
+### Windows
+1. Download the `.msi` or `.exe` installer.
+2. Run the installer (you may need to bypass SmartScreen if valid certificate is pending).
+3. The app will launch automatically.
+
+### Linux
+1. Download the `.AppImage` or `.deb` file.
+2. For AppImage: `chmod +x Illthorn*.AppImage && ./Illthorn*.AppImage`
+3. For Deb: `sudo dpkg -i Illthorn*.deb`
+
 ## Development
 
 ### Prerequisites
 - [Node.js](https://nodejs.org/) (v16+)
 - [Rust](https://www.rust-lang.org/) (Stable)
 - [Tauri CLI](https://tauri.app/)
+
+#### Linux Dependencies
+```bash
+sudo apt-get update
+sudo apt-get install -y libwebkit2gtk-4.0-dev build-essential curl wget file libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+```
 
 ### Setup
 ```bash

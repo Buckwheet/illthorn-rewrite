@@ -43,6 +43,8 @@ const visiblePanels = reactive({
 	debug: false, //
 });
 
+const autoScrollMode = ref<"smart" | "force">("smart");
+
 const roomContainer = ref<HTMLElement | null>(null);
 const arrivalsContainer = ref<HTMLElement | null>(null);
 const bountyContainer = ref<HTMLElement | null>(null);
@@ -138,6 +140,10 @@ function sendDir(dir: string) {
 	store.sendCommand(dir);
 }
 
+function toggleScrollMode() {
+	autoScrollMode.value = autoScrollMode.value === "smart" ? "force" : "smart";
+}
+
 function cycleHistory(direction: "up" | "down") {
 	if (commandHistory.value.length === 0) return;
 
@@ -163,16 +169,31 @@ function cycleHistory(direction: "up" | "down") {
 }
 
 function scrollToBottom() {
+	const container = feedContainer.value;
+	if (!container) return;
+
+	// Check if user is at bottom BEFORE the update (threshold 50px)
+	const threshold = 50;
+	const distanceToBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+	const wasAtBottom = distanceToBottom <= threshold;
+
 	nextTick(() => {
-		if (feedContainer.value) {
-			feedContainer.value.scrollTop = feedContainer.value.scrollHeight;
+		if (autoScrollMode.value === "force" || wasAtBottom) {
+			container.scrollTop = container.scrollHeight;
 		}
 	});
 }
 
 function scrollStream(container: HTMLElement | null) {
+	if (!container) return;
+
+	// Check if user is at bottom BEFORE the update
+	const threshold = 50;
+	const distanceToBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+	const wasAtBottom = distanceToBottom <= threshold;
+
 	nextTick(() => {
-		if (container) {
+		if (autoScrollMode.value === "force" || wasAtBottom) {
 			container.scrollTop = container.scrollHeight;
 		}
 	});
@@ -280,6 +301,10 @@ async function dumpSpells() {
              <button @click="visiblePanels.announcements = !visiblePanels.announcements" :class="{ active: visiblePanels.announcements }">📢 Announce</button>
              <button @click="visiblePanels.inv = !visiblePanels.inv" :class="{ active: visiblePanels.inv }">🎒 Inv</button>
              <button @click="visiblePanels.debug = !visiblePanels.debug" :class="{ active: visiblePanels.debug }">🐞 Debug</button>
+             <!-- Smart Scroll Toggle -->
+             <button @click="toggleScrollMode" :class="{ active: autoScrollMode === 'smart' }" style="margin-left:auto; border-color: #666;">
+                {{ autoScrollMode === 'smart' ? '⚓ Smart Scroll' : '⬇ Force Scroll' }}
+             </button>
           </div>
        </div>
 
