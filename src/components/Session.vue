@@ -265,7 +265,7 @@ async function dumpSpells() {
     <div class="hud">
        <!-- Window Toggles Toolbar -->
        <div class="panel toolbar-panel">
-         <div class="panel-header" @click="toggleCollapse('toolbar')">WINDOWS</div>
+         <div class="panel-header" @click="toggleCollapse('toolbar')">{{ collapsedPanels.has('toolbar') ? '▶' : '▼' }} WINDOWS</div>
          <div class="panel-content toolbar-controls" v-show="!collapsedPanels.has('toolbar')">
             <button @click="visiblePanels.thoughts = !visiblePanels.thoughts" :class="{ active: visiblePanels.thoughts }">💭 Thoughts</button>
             <button @click="visiblePanels.deaths = !visiblePanels.deaths" :class="{ active: visiblePanels.deaths }">💀 Deaths</button>
@@ -284,7 +284,7 @@ async function dumpSpells() {
        </div>
 
       <div class="panel room-panel">
-        <div class="panel-header" @click="toggleCollapse('room')">▼ ROOM</div>
+         <div class="panel-header" @click="toggleCollapse('room')">{{ collapsedPanels.has('room') ? '▶' : '▼' }} ROOM</div>
         <div class="panel-content compass-area" v-show="!collapsedPanels.has('room')">
           <div class="compass-box">
              <!-- Compass with Logic and Clicks -->
@@ -302,7 +302,7 @@ async function dumpSpells() {
       </div>
       
       <div class="panel vitals-panel" v-if="session.vitals">
-        <div class="panel-header" @click="toggleCollapse('vitals')">▼ VITALS</div>
+         <div class="panel-header" @click="toggleCollapse('vitals')">{{ collapsedPanels.has('vitals') ? '▶' : '▼' }} VITALS</div>
         <div class="panel-content vitals-list" v-show="!collapsedPanels.has('vitals')">
            <div class="vital-row"><span class="label">health</span> <span class="value red">{{ session.vitals.health }}/{{ session.vitals.maxHealth }}</span></div>
            <div class="vital-row"><span class="label">mana</span> <span class="value blue">{{ session.vitals.mana }}/{{ session.vitals.maxMana }}</span></div>
@@ -318,7 +318,7 @@ async function dumpSpells() {
       
       <!-- New Panels (Placeholders until parsing added) -->
       <div class="panel spells-panel">
-         <div class="panel-header" @click="toggleCollapse('spells')">▼ ACTIVE SPELLS</div>
+         <div class="panel-header" @click="toggleCollapse('spells')">{{ collapsedPanels.has('spells') ? '▶' : '▼' }} ACTIVE SPELLS</div>
          <div class="panel-content spells-list" v-show="!collapsedPanels.has('spells')">
 						<div v-if="Object.keys(session.activeSpells).length === 0" class="empty">None</div>
 						<div v-else class="spell-list">
@@ -335,11 +335,11 @@ async function dumpSpells() {
          </div>
       </div>
       <div class="panel buffs-panel">
-         <div class="panel-header" @click="toggleCollapse('buffs')">▼ BUFFS</div>
+         <div class="panel-header" @click="toggleCollapse('buffs')">{{ collapsedPanels.has('buffs') ? '▶' : '▼' }} BUFFS</div>
          <div class="panel-content" v-show="!collapsedPanels.has('buffs')"><div class="empty-msg">None</div></div>
       </div>
       <div class="panel debuffs-panel">
-         <div class="panel-header" @click="toggleCollapse('debuffs')">▼ DEBUFFS</div>
+         <div class="panel-header" @click="toggleCollapse('debuffs')">{{ collapsedPanels.has('debuffs') ? '▶' : '▼' }} DEBUFFS</div>
          <div class="panel-content" v-show="!collapsedPanels.has('debuffs')"><div class="empty-msg">None</div></div>
       </div>
       <div class="panel debug-panel" v-show="visiblePanels.debug">
