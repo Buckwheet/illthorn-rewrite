@@ -9,6 +9,7 @@ import {
 	watch,
 } from "vue";
 import { type ActiveSpell, type Session, useSessionStore } from "../stores/session";
+import InjuryPanel from "./InjuryPanel.vue";
 
 const props = defineProps<{
 	session: Session;
@@ -40,6 +41,7 @@ const visiblePanels = reactive({
 	announcements: false,
 	loot: false,
 	inv: false,
+	injuries: true, // v0.0.2
 	debug: false, //
 });
 
@@ -301,6 +303,7 @@ async function dumpSpells() {
              <button @click="visiblePanels.ambients = !visiblePanels.ambients" :class="{ active: visiblePanels.ambients }">🍃 Ambients</button>
              <button @click="visiblePanels.announcements = !visiblePanels.announcements" :class="{ active: visiblePanels.announcements }">📢 Announce</button>
              <button @click="visiblePanels.inv = !visiblePanels.inv" :class="{ active: visiblePanels.inv }">🎒 Inv</button>
+             <button @click="visiblePanels.injuries = !visiblePanels.injuries" :class="{ active: visiblePanels.injuries }">🤕 Injuries</button>
              <button @click="visiblePanels.debug = !visiblePanels.debug" :class="{ active: visiblePanels.debug }">🐞 Debug</button>
              <!-- Smart Scroll Toggle -->
              <button @click="toggleScrollMode" :class="{ active: autoScrollMode === 'smart' }" style="margin-left:auto; border-color: #666;">
@@ -340,6 +343,14 @@ async function dumpSpells() {
            <div class="vital-row"><span class="label">mind</span> <span class="value mind">{{ session.vitals.mindText }}</span></div>
            <div class="vital-row" v-if="session.vitals.nextLevelText"><span class="label">next level</span> <span class="value yellow">{{ session.vitals.nextLevelText }}</span></div>
         </div>
+      </div>
+      
+      <!-- Injury Panel (v0.0.2) -->
+      <div class="panel injury-wrapper" v-if="visiblePanels.injuries">
+         <div class="panel-header" @click="toggleCollapse('injuries')">{{ collapsedPanels.has('injuries') ? '▶' : '▼' }} INJURIES</div>
+         <div class="panel-content" v-show="!collapsedPanels.has('injuries')" style="display:flex; justify-content:center;">
+             <InjuryPanel />
+         </div>
       </div>
       
       <!-- New Panels (Placeholders until parsing added) -->

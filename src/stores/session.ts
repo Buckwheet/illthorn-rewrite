@@ -59,6 +59,7 @@ export interface Session {
 	speech: string[];
 	familiar: string[];
 	activeSpells: Record<string, ActiveSpell>; // ID -> Content
+	injuries: Record<string, number>; // Body Part -> Severity (0=None, 1-3=Injury, 4-6=Scar)
 	exits: string[]; // ['n', 's', 'out', ...]
 
 	// New Phase 30 Streams
@@ -79,6 +80,7 @@ export interface Session {
 	// Internal State
 	activeHand: "left" | "right" | "spell" | null;
 	parsingActiveSpells: boolean; // State flag for dialog
+	parsingInjuries: boolean; // State flag for injury dialog
 	// biome-ignore lint/suspicious/noExplicitAny: Relaxed type to avoid struct/class mismatch issues during build
 	parser: any;
 }
@@ -466,6 +468,32 @@ export const useSessionStore = defineStore("session", () => {
 							}
 						}
 					}
+
+					// INJURY PARSING
+					if (tag.name === "dialogData" && tag.attributes.id === "injuries") {
+						if (tag.isClosing) {
+							session.parsingInjuries = false;
+						} else {
+							session.parsingInjuries = true;
+							if (tag.attributes.clear === "t") {
+								session.injuries = {};
+							}
+						}
+					}
+
+					if (tag.name === "image" && session.parsingInjuries) {
+						const id = tag.attributes.id;
+						const name = tag.attributes.name;
+						if (id && name) {
+							let severity = 0;
+							if (name.startsWith("Injury")) {
+								severity = parseInt(name.replace("Injury", ""), 10);
+							} else if (name.startsWith("Scar")) {
+								severity = parseInt(name.replace("Scar", ""), 10) + 3;
+							}
+							session.injuries[id] = severity;
+						}
+					}
 				}
 			}
 		}
@@ -502,6 +530,7 @@ export const useSessionStore = defineStore("session", () => {
 				speech: [],
 				familiar: [],
 				activeSpells: {},
+				injuries: {},
 
 				// Phase 30
 				arrivals: [],
@@ -518,6 +547,7 @@ export const useSessionStore = defineStore("session", () => {
 				hands: { ...defaultHands }, // Clone defaults
 				activeHand: null,
 				parsingActiveSpells: false,
+				parsingInjuries: false,
 				parser: null, // Placeholder or remove field from interface
 			};
 

@@ -1,0 +1,49 @@
+<svg width="200" height="400" viewBox="0 0 200 400" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    .body-part { fill: #333; stroke: #555; stroke-width: 1; transition: fill 0.3s; }
+    .injury-1 { fill: #aa5500 !important; }
+    .injury-2 { fill: #ff8800 !important; }
+    .injury-3 { fill: #ff0000 !important; }
+    .scar-1 { stroke: #999; stroke-width: 2 !important; }
+    .scar-2 { stroke: #777; stroke-width: 3 !important; }
+    .scar-3 { stroke: #555; stroke-width: 4 !important; }
+  </style>
+
+  <!-- Head Group -->
+  <g id="head-group">
+    <ellipse id="head" class="body-part" cx="100" cy="50" rx="25" ry="30" />
+    <circle id="leftEye" class="body-part" cx="90" cy="45" r="3" />
+    <circle id="rightEye" class="body-part" cx="110" cy="45" r="3" />
+  </g>
+
+  <!-- Neck -->
+  <rect id="neck" class="body-part" x="90" y="80" width="20" height="15" />
+
+  <!-- Torso Group -->
+  <g id="torso-group">
+    <path id="chest" class="body-part" d="M 75 95 L 125 95 L 120 140 L 80 140 Z" />
+    <rect id="back" class="body-part" x="75" y="95" width="50" height="95" opacity="0.3" pointer-events="none" /> <!-- Ghost back used for logical mapping, transparent overlay? Or handled via specific UI toggle. For now, chest represents torso front. -->
+    <rect id="abdomen" class="body-part" x="80" y="140" width="40" height="50" />
+  </g>
+
+  <!-- Arms -->
+  <g id="left-arm-group">
+    <rect id="leftArm" class="body-part" x="45" y="100" width="30" height="80" rx="5" />
+    <circle id="leftHand" class="body-part" cx="60" cy="190" r="10" />
+  </g>
+
+  <g id="right-arm-group">
+    <rect id="rightArm" class="body-part" x="125" y="100" width="30" height="80" rx="5" />
+    <circle id="rightHand" class="body-part" cx="140" cy="190" r="10" />
+  </g>
+
+  <!-- Legs -->
+  <g id="legs-group">
+    <rect id="leftLeg" class="body-part" x="75" y="190" width="20" height="100" rx="5" />
+    <rect id="rightLeg" class="body-part" x="105" y="190" width="20" height="100" rx="5" />
+  </g>
+
+  <!-- Nerves (Abstract representation, maybe spinal) -->
+  <rect id="nsys" class="body-part" x="98" y="95" width="4" height="95" fill="#444" />
+
+</svg>
