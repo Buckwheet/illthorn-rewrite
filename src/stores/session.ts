@@ -202,7 +202,12 @@ export const useSessionStore = defineStore("session", () => {
 
 					// C. Fallback Exit Parsing (Text-Based)
 					// Matches "Obvious paths: north, east, south, west"
+					if (text.includes("Obvious")) {
+						console.log("[DEBUG] Found 'Obvious' in text:", text);
+					}
+
 					if (text.match(/Obvious (paths|exits):/i)) {
+						console.log("[DEBUG] Regex matched for exits in:", text);
 						// Only clear if we found a paths line, assuming this is authoritative for the room
 						// session.exits = []; // Optional: Decide if we want to wipe previous XML compass data. 
 						// Usually text comes WITH XML, so maybe we append or merge? 

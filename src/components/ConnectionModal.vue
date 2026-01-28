@@ -18,7 +18,7 @@ async function loadDebug() {
 	try {
 		debugInfo.value = await invoke("debug_diagnostics");
 	} catch (e) {
-		debugInfo.value = "Failed to load diagnostics: " + e;
+		debugInfo.value = `Failed to load diagnostics: ${e}`;
 	}
 }
 
