@@ -101,10 +101,10 @@ const getInjuryClass = (part: string) => {
 .injury-2 { fill: #ff8800 !important; stroke: #ffaa00; filter: drop-shadow(0 0 2px #ff8800); }
 .injury-3 { fill: #ff0000 !important; stroke: #ff4444; filter: drop-shadow(0 0 4px #ff0000); }
 
-/* Scar Colors usually affect Stroke more, or a faded fill */
-.scar-1 { stroke: #999; stroke-width: 2 !important; stroke-dasharray: 2,2; }
-.scar-2 { stroke: #bbb; stroke-width: 3 !important; stroke-dasharray: 2,1; }
-.scar-3 { stroke: #fff; stroke-width: 3 !important; }
+/* Scar Colors - Bright Yellow Dashed as requested */
+.scar-1 { stroke: #ffff00; stroke-width: 2 !important; stroke-dasharray: 4,2; fill: transparent; }
+.scar-2 { stroke: #ffff00; stroke-width: 3 !important; stroke-dasharray: 4,2; fill: transparent; }
+.scar-3 { stroke: #ffff00; stroke-width: 4 !important; stroke-dasharray: 4,2; fill: transparent; }
 
 /* Nsys specific visibility */
 .nsys {
@@ -131,5 +131,5 @@ const getInjuryClass = (part: string) => {
 .swatch.injury-1 { background: #aa5500; }
 .swatch.injury-2 { background: #ff8800; }
 .swatch.injury-3 { background: #ff0000; }
-.swatch.scar-1 { background: #333; border-color: #999; border-style: dashed; }
+.swatch.scar-1 { background: transparent; border-color: #ffff00; border-style: dashed; border-width: 2px; }
 </style>
