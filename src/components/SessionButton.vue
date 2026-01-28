@@ -1,5 +1,5 @@
 <script setup lang="ts">
-// biome-ignore lint/correctness/noUnusedImports: Used in template
+
 import { computed } from "vue";
 import { type Session, useSessionStore } from "../stores/session";
 

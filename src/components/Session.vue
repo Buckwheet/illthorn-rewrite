@@ -8,7 +8,7 @@ import {
 	ref,
 	watch,
 } from "vue";
-import { type Session, useSessionStore } from "../stores/session";
+import { type ActiveSpell, type Session, useSessionStore } from "../stores/session";
 
 const props = defineProps<{
 	session: Session;
@@ -101,7 +101,7 @@ onUnmounted(() => {
 	if (timerInterval) clearInterval(timerInterval);
 });
 
-function formatRemaining(spell: any) {
+function formatRemaining(spell: ActiveSpell) {
 	if (!spell.durationSeconds) return spell.value;
 
 	// Default to value if no receivedAt, but we set it in parser
@@ -174,7 +174,8 @@ function scrollToBottom() {
 
 	// Check if user is at bottom BEFORE the update (threshold 50px)
 	const threshold = 50;
-	const distanceToBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+	const distanceToBottom =
+		container.scrollHeight - container.scrollTop - container.clientHeight;
 	const wasAtBottom = distanceToBottom <= threshold;
 
 	nextTick(() => {
@@ -189,7 +190,8 @@ function scrollStream(container: HTMLElement | null) {
 
 	// Check if user is at bottom BEFORE the update
 	const threshold = 50;
-	const distanceToBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+	const distanceToBottom =
+		container.scrollHeight - container.scrollTop - container.clientHeight;
 	const wasAtBottom = distanceToBottom <= threshold;
 
 	nextTick(() => {
@@ -230,14 +232,14 @@ const sortedSpellRows = computed(() => {
 	spells.forEach((s) => {
 		if (processed.has(s.value + s.top)) return; // Simple dedup (optional)
 
-		const rawTop = s.top ? parseInt(s.top) : null;
+		const rawTop = s.top ? parseInt(s.top, 10) : null;
 		let topKey = "unknown";
 
 		if (rawTop !== null) {
 			// Check existing keys for a fuzzy match
 			const existingKey = Object.keys(rows).find((k) => {
 				if (k === "unknown") return false;
-				return Math.abs(parseInt(k) - rawTop) <= 5;
+				return Math.abs(parseInt(k, 10) - rawTop) <= 5;
 			});
 			topKey = existingKey || rawTop.toString();
 		}
@@ -250,14 +252,14 @@ const sortedSpellRows = computed(() => {
 	const sortedKeys = Object.keys(rows).sort((a, b) => {
 		if (a === "unknown") return 1;
 		if (b === "unknown") return -1;
-		return parseInt(a) - parseInt(b);
+		return parseInt(a, 10) - parseInt(b, 10);
 	});
 
 	// Valid rows, sorted by Left
 	return sortedKeys.map((k) => {
 		return rows[k].sort((a, b) => {
-			const la = a.left ? parseInt(a.left) : 0;
-			const lb = b.left ? parseInt(b.left) : 0;
+			const la = a.left ? parseInt(a.left, 10) : 0;
+			const lb = b.left ? parseInt(b.left, 10) : 0;
 			return la - lb;
 		});
 	});
@@ -274,9 +276,8 @@ async function dumpSpells() {
 		const { invoke } = await import("@tauri-apps/api/core");
 		const path = await invoke("save_debug_log", { content });
 		props.session.debugLog.push(`Saved log to: ${path}`);
-	} catch (e: any) {
+	} catch (e) {
 		props.session.debugLog.push(`Failed to save log: ${e}`);
-		console.error(e);
 	}
 }
 </script>

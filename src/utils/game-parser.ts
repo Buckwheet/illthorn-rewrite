@@ -38,9 +38,9 @@ export class GameParser {
 					if (
 						prevTag &&
 						(prevTag.name === "preset" || prevTag.name === "style") &&
-						prevTag.attributes["id"]
+						prevTag.attributes.id
 					) {
-						styleClass = prevTag.attributes["id"];
+						styleClass = prevTag.attributes.id;
 					}
 
 					this.processText(text, tags, this.currentStream);
@@ -59,9 +59,9 @@ export class GameParser {
 				if (
 					prevTag &&
 					(prevTag.name === "preset" || prevTag.name === "style") &&
-					prevTag.attributes["id"]
+					prevTag.attributes.id
 				) {
-					styleClass = prevTag.attributes["id"];
+					styleClass = prevTag.attributes.id;
 				}
 
 				this.processText(text, tags, this.currentStream);
@@ -99,10 +99,10 @@ export class GameParser {
 		if (
 			lastTag &&
 			(lastTag.name === "preset" || lastTag.name === "style") &&
-			lastTag.attributes["id"] &&
+			lastTag.attributes.id &&
 			!lastTag.text
 		) {
-			styleClass = lastTag.attributes["id"];
+			styleClass = lastTag.attributes.id;
 		}
 
 		tags.push({
@@ -126,7 +126,7 @@ export class GameParser {
 		if (stream !== "main") return "";
 
 		// Suppress room components from Main Feed (they go to Room window)
-		if (this.componentId && this.componentId.startsWith("room")) return "";
+		if (this.componentId?.startsWith("room")) return "";
 
 		// Suppress content if we are inside a hidden tag (like Hand info)
 		if (this.inHiddenTag) return "";
@@ -186,7 +186,7 @@ export class GameParser {
 				// Assuming popStream handles popping.
 				this.currentStream = "main";
 			} else {
-				this.currentStream = attributes["id"] || "main";
+				this.currentStream = attributes.id || "main";
 			}
 		}
 
@@ -202,7 +202,7 @@ export class GameParser {
 			if (isClose) {
 				this.componentId = null;
 			} else {
-				this.componentId = attributes["id"] || null;
+				this.componentId = attributes.id || null;
 			}
 		}
 

@@ -32,6 +32,15 @@ export interface Hands {
 	spell: string;
 }
 
+export interface ActiveSpell {
+	text: string;
+	value: string;
+	top?: string;
+	left?: string;
+	durationSeconds?: number;
+	receivedAt?: number;
+}
+
 export interface SessionConfig {
 	name: string;
 	host: string;
@@ -49,18 +58,7 @@ export interface Session {
 	deaths: string[];
 	speech: string[];
 	familiar: string[];
-	activeSpells: Record<
-		string,
-		{
-			text: string;
-			value: string;
-			top?: string;
-			left?: string;
-			// Phase 46: Timer Fields
-			durationSeconds?: number;
-			receivedAt?: number;
-		}
-	>; // ID -> Content
+	activeSpells: Record<string, ActiveSpell>; // ID -> Content
 	exits: string[]; // ['n', 's', 'out', ...]
 
 	// New Phase 30 Streams
@@ -81,7 +79,8 @@ export interface Session {
 	// Internal State
 	activeHand: "left" | "right" | "spell" | null;
 	parsingActiveSpells: boolean; // State flag for dialog
-	parser: any; // Relaxed type to avoid struct/class mismatch issues during build
+	// biome-ignore lint/suspicious/noExplicitAny: Relaxed type to avoid struct/class mismatch issues during build
+	parser: any;
 }
 
 const defaultVitals: Vitals = {
@@ -112,7 +111,7 @@ const defaultHands: Hands = {
 // Phase 46: Helper to parse "HH:MM:SS" or "MM:SS" into seconds
 function parseDuration(timeStr: string): number {
 	const parts = timeStr.trim().split(":").map(Number);
-	if (parts.some(isNaN)) return 0;
+	if (parts.some(Number.isNaN)) return 0;
 
 	if (parts.length === 3) {
 		// HH:MM:SS
@@ -170,8 +169,8 @@ export const useSessionStore = defineStore("session", () => {
 					const text = tag.text || "";
 					if (!text) continue; // Skip empty text
 
-					if (tag.attributes && tag.attributes["stream"]) {
-						const stream = tag.attributes["stream"];
+					if (tag.attributes?.stream) {
+						const stream = tag.attributes.stream;
 						if (stream === "thoughts") session.thoughts.push(text);
 						if (stream === "room") session.room.push(text);
 						if (stream === "death") session.deaths.push(text);
@@ -190,8 +189,8 @@ export const useSessionStore = defineStore("session", () => {
 					}
 
 					// Component Capture (Room Objs, etc.)
-					if (tag.attributes && tag.attributes["component"]) {
-						const comp = tag.attributes["component"];
+					if (tag.attributes?.component) {
+						const comp = tag.attributes.component;
 						if (comp.startsWith("room")) session.room.push(text);
 					}
 
@@ -200,11 +199,10 @@ export const useSessionStore = defineStore("session", () => {
 						session.hands[session.activeHand] = text.trim();
 					}
 
-
 					if (text.match(/Obvious (paths|exits):/i)) {
 						// Only clear if we found a paths line, assuming this is authoritative for the room
-						// session.exits = []; // Optional: Decide if we want to wipe previous XML compass data. 
-						// Usually text comes WITH XML, so maybe we append or merge? 
+						// session.exits = []; // Optional: Decide if we want to wipe previous XML compass data.
+						// Usually text comes WITH XML, so maybe we append or merge?
 						// Let's merge to be safe, but unique.
 
 						const longDirToShort: Record<string, string> = {
@@ -222,7 +220,9 @@ export const useSessionStore = defineStore("session", () => {
 						};
 
 						// Extract all known direction words
-						const foundDirs = text.match(/\b(north|northeast|east|southeast|south|southwest|west|northwest|out|up|down)\b/gi);
+						const foundDirs = text.match(
+							/\b(north|northeast|east|southeast|south|southwest|west|northwest|out|up|down)\b/gi,
+						);
 
 						if (foundDirs) {
 							// Found new exits line, so we should likely clear the old state to be accurate
@@ -254,7 +254,7 @@ export const useSessionStore = defineStore("session", () => {
 							tag.name === "compass"
 						) {
 							session.debugLog.push(
-								`[${tag.name}] id=${tag.attributes["id"] || ""} val=${tag.attributes["value"] || ""} text=${tag.text || ""}`,
+								`[${tag.name}] id=${tag.attributes.id || ""} val=${tag.attributes.value || ""} text=${tag.text || ""}`,
 							);
 						} else {
 							session.debugLog.push(
@@ -270,16 +270,16 @@ export const useSessionStore = defineStore("session", () => {
 						session.exits = [];
 					}
 					if (tag.name === "dir") {
-						const dir = tag.attributes["value"];
+						const dir = tag.attributes.value;
 						if (dir && !session.exits.includes(dir)) {
 							session.exits.push(dir);
 						}
 					}
 
 					if (tag.name === "progressBar") {
-						const id = tag.attributes["id"];
-						const value = Number(tag.attributes["value"]);
-						const text = tag.attributes["text"];
+						const id = tag.attributes.id;
+						const value = Number(tag.attributes.value);
+						const text = tag.attributes.text;
 
 						if (id === "health") session.vitals.health = value;
 						if (id === "mana") session.vitals.mana = value;
@@ -362,11 +362,11 @@ export const useSessionStore = defineStore("session", () => {
 
 					// Active Spells (Dialog Parsing)
 					// Robust State-Based Parsing
-					if (tag.name === "dialogData" && tag.attributes["id"]) {
-						const dialogId = tag.attributes["id"].toLowerCase();
+					if (tag.name === "dialogData" && tag.attributes.id) {
+						const dialogId = tag.attributes.id.toLowerCase();
 
 						if (dialogId === "active spells") {
-							if (tag.attributes["clear"] === "t") {
+							if (tag.attributes.clear === "t") {
 								session.activeSpells = {}; // Clear ONLY if requested
 							}
 
@@ -383,11 +383,11 @@ export const useSessionStore = defineStore("session", () => {
 					// PHASE 44: MOVED OUTSIDE of isLabel/isLink check!
 					// Warlock3 sends Active Spells as <progressBar> tags containing BOTH name and time.
 					if (tag.name === "progressBar" && session.parsingActiveSpells) {
-						const id = tag.attributes["id"];
-						const text = tag.attributes["text"]; // Spell Name
-						const time = tag.attributes["time"]; // Duration
-						const top = tag.attributes["top"];
-						const left = tag.attributes["left"];
+						const id = tag.attributes.id;
+						const text = tag.attributes.text; // Spell Name
+						const time = tag.attributes.time; // Duration
+						const top = tag.attributes.top;
+						const left = tag.attributes.left;
 
 						if (id && text) {
 							session.activeSpells[id] = {
@@ -403,22 +403,22 @@ export const useSessionStore = defineStore("session", () => {
 					}
 
 					// Warlock3 uses <link> for the spell name and <label> for the time
-					const isLabel = tag.name === "label" && tag.attributes["id"];
-					const isLink = tag.name === "link" && tag.attributes["id"];
+					const isLabel = tag.name === "label" && tag.attributes.id;
+					const isLink = tag.name === "link" && tag.attributes.id;
 
 					if (isLabel || isLink) {
-						const id = tag.attributes["id"];
+						const id = tag.attributes.id;
 						if (id === "lblNone") {
 							// Ignore "No active spells/buffs" labels
 						} else {
 							const value =
-								tag.attributes["value"] ||
-								tag.attributes["text"] ||
+								tag.attributes.value ||
+								tag.attributes.text ||
 								tag.text ||
 								"";
 
-							const top = tag.attributes["top"];
-							const left = tag.attributes["left"];
+							const top = tag.attributes.top;
+							const left = tag.attributes.left;
 
 							// PHASE 40: Granular Debugging
 							// Log raw tags to Debug Window to help diagnose missing names
@@ -451,7 +451,7 @@ export const useSessionStore = defineStore("session", () => {
 								if (tag.name === "link") {
 									// START LINK: This is the Name (and clickable command)
 									session.activeSpells[normalizedId].text =
-										value || tag.attributes["id"]; // Fallback to ID if no text
+										value || tag.attributes.id; // Fallback to ID if no text
 									if (top) session.activeSpells[normalizedId].top = top;
 									if (left) session.activeSpells[normalizedId].left = left;
 								} else if (tag.name === "label") {
@@ -524,7 +524,7 @@ export const useSessionStore = defineStore("session", () => {
 			sessions.value.set(config.name, newSession);
 			currentSessionId.value = config.name;
 		} catch (error) {
-			console.error("Failed to connect:", error);
+			console.warn("Failed to connect:", error);
 			throw error;
 		}
 	}
@@ -551,7 +551,7 @@ export const useSessionStore = defineStore("session", () => {
 				command,
 			});
 		} catch (error) {
-			console.error("Failed to send command:", error);
+			console.warn("Failed to send command:", error);
 		}
 	}
 
@@ -564,7 +564,7 @@ export const useSessionStore = defineStore("session", () => {
 				currentSessionId.value = null;
 			}
 		} catch (error) {
-			console.error("Failed to disconnect:", error);
+			console.warn("Failed to disconnect:", error);
 		}
 	}
 
@@ -580,7 +580,7 @@ export const useSessionStore = defineStore("session", () => {
 				}
 			}
 		} catch (error) {
-			console.error("Failed to scan sessions:", error);
+			console.warn("Failed to scan sessions:", error);
 		}
 	}
 
