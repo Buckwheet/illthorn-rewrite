@@ -37,11 +37,29 @@ const getInjuryClass = (part: string) => {
           <feGaussianBlur stdDeviation="2" result="blur" />
           <feComposite in="SourceGraphic" in2="blur" operator="over" />
         </filter>
+        <clipPath id="headClip">
+          <ellipse cx="100" cy="50" rx="25" ry="30" />
+        </clipPath>
       </defs>
       
-      <!-- Head -->
+      <!-- Head Group -->
       <g id="head-group">
-        <ellipse :class="['body-part', getInjuryClass('head')]" cx="100" cy="50" rx="25" ry="30" />
+        <!-- Face Image (Custom) -->
+        <image 
+            href="/face.png" 
+            x="75" y="20" width="50" height="60" 
+            preserveAspectRatio="xMidYMid slice"
+            clip-path="url(#headClip)"
+            style="opacity: 0.9;"
+        />
+        
+        <!-- Head Overlay (Transparent by default, colored on injury) -->
+        <ellipse 
+            :class="['body-part', 'head-overlay', getInjuryClass('head')]" 
+            cx="100" cy="50" rx="25" ry="30" 
+            style="fill: transparent; stroke: #555; stroke-width: 1;"
+        />
+
         <circle :class="['body-part', getInjuryClass('leftEye')]" cx="90" cy="45" r="3" />
         <circle :class="['body-part', getInjuryClass('rightEye')]" cx="110" cy="45" r="3" />
       </g>
@@ -100,6 +118,11 @@ const getInjuryClass = (part: string) => {
 .injury-1 { fill: #aa5500 !important; stroke: #cc6600; }
 .injury-2 { fill: #ff8800 !important; stroke: #ffaa00; filter: drop-shadow(0 0 2px #ff8800); }
 .injury-3 { fill: #ff0000 !important; stroke: #ff4444; filter: drop-shadow(0 0 4px #ff0000); }
+
+/* Head Overlay Specific - Semi-Transparent so face shows through */
+.head-overlay.injury-1 { fill: rgba(170, 85, 0, 0.5) !important; }
+.head-overlay.injury-2 { fill: rgba(255, 136, 0, 0.5) !important; }
+.head-overlay.injury-3 { fill: rgba(255, 0, 0, 0.5) !important; }
 
 /* Scar Colors - Bright Yellow Dashed as requested */
 .scar-1 { stroke: #ffff00; stroke-width: 2 !important; stroke-dasharray: 4,2; fill: transparent; }
