@@ -419,8 +419,8 @@ export const useSessionStore = defineStore("session", () => {
 								tag.text ||
 								"";
 
-							const top = tag.attributes.top;
-							const left = tag.attributes.left;
+							// const top = tag.attributes.top;
+							// const left = tag.attributes.left;
 
 							// PHASE 40: Granular Debugging
 							// Log raw tags to Debug Window to help diagnose missing names
@@ -450,48 +450,55 @@ export const useSessionStore = defineStore("session", () => {
 								}
 
 								// Update fields based on tag type
+								// Update fields based on tag type
 								if (tag.name === "link") {
 									// START LINK: This is the Name (and clickable command)
 									session.activeSpells[normalizedId].text =
 										value || tag.attributes.id; // Fallback to ID if no text
-									if (top) session.activeSpells[normalizedId].top = top;
-									if (left) session.activeSpells[normalizedId].left = left;
+									// if (top) session.activeSpells[normalizedId].top = top;
+									// if (left) session.activeSpells[normalizedId].left = left;
 								} else if (tag.name === "label") {
 									// LABEL: This is typically the Duration
 									// Sometimes label also has top/left, but Link is primary for position
 									session.activeSpells[normalizedId].value = value;
-									if (top && !session.activeSpells[normalizedId].top)
-										session.activeSpells[normalizedId].top = top;
-									if (left && !session.activeSpells[normalizedId].left)
-										session.activeSpells[normalizedId].left = left;
+									// if (top && !session.activeSpells[normalizedId].top)
+									// 	session.activeSpells[normalizedId].top = top;
+									// if (left && !session.activeSpells[normalizedId].left)
+									// 	session.activeSpells[normalizedId].left = left;
 								}
 							}
 						}
 					}
 
 					// INJURY PARSING
+					// Note: Relaxed check. If we see an image tag with "Injury" or "Scar", it's an injury.
+					// We don't strictly require the dialogData wrapper state because sometimes it might be missed or atomic.
 					if (tag.name === "dialogData" && tag.attributes.id === "injuries") {
-						if (tag.isClosing) {
-							session.parsingInjuries = false;
-						} else {
-							session.parsingInjuries = true;
-							if (tag.attributes.clear === "t") {
-								session.injuries = {};
-							}
+						if (!tag.isClosing && tag.attributes.clear === "t") {
+							session.injuries = {};
+							session.debugLog.push("[Injury] Cleared injuries");
 						}
 					}
 
-					if (tag.name === "image" && session.parsingInjuries) {
+					if (tag.name === "image") {
 						const id = tag.attributes.id;
 						const name = tag.attributes.name;
 						if (id && name) {
 							let severity = 0;
+							let isInjury = false;
+
 							if (name.startsWith("Injury")) {
 								severity = parseInt(name.replace("Injury", ""), 10);
+								isInjury = true;
 							} else if (name.startsWith("Scar")) {
 								severity = parseInt(name.replace("Scar", ""), 10) + 3;
+								isInjury = true;
 							}
-							session.injuries[id] = severity;
+
+							if (isInjury) {
+								session.debugLog.push(`[Injury] Applied: ${id} = ${severity}`);
+								session.injuries = { ...session.injuries, [id]: severity };
+							}
 						}
 					}
 				}

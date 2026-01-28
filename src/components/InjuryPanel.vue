@@ -84,7 +84,7 @@ const getInjuryClass = (part: string) => {
   flex-direction: column;
   align-items: center;
   background: rgba(0, 0, 0, 0.3);
-  padding: 10px;
+  padding: 5px; /* Reduced from 10px */
   border-radius: 8px;
   border: 1px solid #444;
 }

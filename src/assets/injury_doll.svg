@@ -1,4 +1,4 @@
-<svg width="200" height="400" viewBox="0 0 200 400" xmlns="http://www.w3.org/2000/svg">
+<svg width="200" height="300" viewBox="0 0 200 300" xmlns="http://www.w3.org/2000/svg">
   <style>
     .body-part { fill: #333; stroke: #555; stroke-width: 1; transition: fill 0.3s; }
     .injury-1 { fill: #aa5500 !important; }
