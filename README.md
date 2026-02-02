@@ -33,17 +33,38 @@ By leveraging **Rust** for the backend (via Tauri), we achieve minimal resource 
 - **Modern UI**: Dark mode, customizable panels, and familiar layout.
 
 
-## Prerequisites
-*   **Lich**: You must have Lich installed and running for GemStone IV.
-*   **Headless Client**: Illthorn connects to Lich as a frontend. Run Lich in headless mode:
-    ```bash
-    # Standard Lich (Ruby)
-    ruby lich.rb --login <CharacterName> --without-frontend --detachable-client=11024
-    
-    # Lich 5 (if applicable)
-    ./lich.rb --login <CharacterName> --without-frontend --detachable-client=11024
+## 📋 Prerequisites (For Players)
+
+To use Illthorn, you essentially need two things: **Lich** (running the game) and **Illthorn** (showing the game).
+
+1.  **Lich Installed**: You must have a working installation of Lich 5.
+    *   *Need help?* See the [Lich Installation Guide](https://gswiki.play.net/Lich:_Software).
+2.  **Microsoft WebView2**: (Standard on Windows 10/11).
+    *   If the app immediately crashes or is blank, download the [Evergreen Bootstrapper](https://developer.microsoft.com/en-us/microsoft-edge/webview2/).
+
+---
+
+## 🚀 How to Play
+
+Illthorn acts as a modern screen for Lich. You need to start Lich in "Headless Mode" (no window) so Illthorn can take over.
+
+### Step 1: Start Lich (Headless)
+
+**The Easy Way (Windows Shortcut):**
+1.  Find your `lich.rbw` file (in your Lich folder).
+2.  Right-click it and choose **Create Shortcut**.
+3.  Right-click the new shortcut and select **Properties**.
+4.  In the **Target** field, add the following to the very end of the line (after the quotes):
+    ```text
+    --login CHARACTER_NAME --without-frontend --detachable-client=11024
     ```
-    *Note: Port 11024 is the default for Illthorn/Vellum.*
+    *(Replace `CHARACTER_NAME` with your actual character's name)*
+5.  **Run this shortcut**. You won't see a game window, but Lich is now running in the background!
+
+### Step 2: Launch Illthorn
+1.  Run **Illthorn**.
+2.  It will automatically find your running Lich session and connect.
+3.  Enjoy the modern UI!
 
 ## Installation
 **Download the latest release from the [Releases Page](https://github.com/Buckwheet/illthorn-rewrite/releases).**
@@ -61,14 +82,32 @@ By leveraging **Rust** for the backend (via Tauri), we achieve minimal resource 
 ## Development
 
 ### Prerequisites
-- [Node.js](https://nodejs.org/) (v16+)
-- [Rust](https://www.rust-lang.org/) (Stable)
-- [Tauri CLI](https://tauri.app/)
 
-#### Linux Dependencies
+To build Illthorn from source, you need to set up your development environment.
+
+#### 🪟 Windows Development Setup
+1.  **Install Visual Studio C++ Build Tools**:
+    *   Download [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/).
+    *   **Crucial**: During installation, ensure you select the **"Desktop development with C++"** workload.
+    *   This provides the MSVC compiler and linker required by Rust.
+
+2.  **Install Rust**:
+    *   Download and run [rustup-init.exe](https://win.rustup.rs/).
+    *   Proceed with the default installation (it will detect the C++ tools from step 1).
+
+3.  **Install Node.js**:
+    *   Download the [LTS version](https://nodejs.org/) (v18 or higher).
+
+#### 🐧 Linux Development Setup
 ```bash
 sudo apt-get update
 sudo apt-get install -y libwebkit2gtk-4.0-dev build-essential curl wget file libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+```
+
+#### 🍎 macOS Development Setup
+```bash
+xcode-select --install
+curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf | sh
 ```
 
 ### Setup
