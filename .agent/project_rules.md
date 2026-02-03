@@ -17,7 +17,7 @@ These rules are **MANDATORY** for all development sessions.
 *   **Action Sequence**:
     1.  **Verify**: Confirm the specific goal of the step is met.
     2.  **Commit**: `git add .` -> `git commit -m "feat: [Step Name] ..."`
-    3.  **Version Bump**: `npm version major` (unless instructed otherwise).
+    3.  **Version Bump**: `npm version patch` (default) - Only use Major/Minor if explicitly requested.
     4.  **Stop**: Halt and ask user for permission to proceed to the next step.
 
 ## 4. State Persistence

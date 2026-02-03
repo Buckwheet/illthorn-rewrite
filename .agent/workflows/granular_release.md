@@ -21,7 +21,7 @@ This workflow enforces the "One Step = One Release" rule.
 ## 4. Release & State Save
 - Run `git add .`
 - Run `git commit -m "feat: [Step Name]"`
-- Run `npm version minor` (or `major` if requested).
+- Run `npm version patch` (default).
 - Update `task.md`: Mark item as `[x]`.
 
 ## 5. Stop Point
