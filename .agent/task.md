@@ -6,7 +6,7 @@
         - Implementation of `tauri-plugin-store` or equivalent.
         - Create backend `Store` service.
         - *Goal: App can save/load a file to disk.*
-    - [ ] **Step 2: Highlights Data Structure & Loading** <!-- id: 4 -->
+    - [x] **Step 2: Highlights Data Structure & Loading** <!-- id: 4 -->
         - Define `Highlight` struct (pattern, color, is_regex, sound).
         - Connect `Session` to load highlights on startup.
         - *Goal: Hardcoded highlights in JSON file appear in app.*

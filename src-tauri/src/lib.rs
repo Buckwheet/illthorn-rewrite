@@ -4,6 +4,7 @@ use std::sync::Mutex;
 use tauri::{AppHandle, Listener, Manager, State};
 
 mod command_processor;
+mod highlights;
 mod session;
 
 struct SessionState(Mutex<HashMap<String, Session>>);
@@ -242,6 +243,40 @@ async fn remove_alias(
     Ok(())
 }
 
+#[tauri::command]
+async fn update_highlights(
+    session: String,
+    highlights: Vec<crate::highlights::Highlight>,
+    state: State<'_, SessionState>,
+) -> Result<(), String> {
+    let sess = {
+        let sessions = state.0.lock().map_err(|e| e.to_string())?;
+        sessions
+            .get(&session)
+            .cloned()
+            .ok_or_else(|| format!("Session {} not found", session))?
+    };
+
+    sess.set_highlights(highlights).await;
+    Ok(())
+}
+
+#[tauri::command]
+async fn get_highlights(
+    session: String,
+    state: State<'_, SessionState>,
+) -> Result<Vec<crate::highlights::Highlight>, String> {
+    let sess = {
+        let sessions = state.0.lock().map_err(|e| e.to_string())?;
+        sessions
+            .get(&session)
+            .cloned()
+            .ok_or_else(|| format!("Session {} not found", session))?
+    };
+
+    Ok(sess.get_highlights().await)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -257,7 +292,9 @@ pub fn run() {
             debug_diagnostics,
             save_debug_log,
             set_alias,
-            remove_alias
+            remove_alias,
+            update_highlights,
+            get_highlights
         ])
         .setup(|app| {
             let app_handle = app.handle().clone();

@@ -8,6 +8,7 @@ import {
 	ref,
 	watch,
 } from "vue";
+import { useHighlightsStore } from "../stores/highlights";
 import {
 	type ActiveSpell,
 	type Session,
@@ -93,9 +94,15 @@ watch(
 	() => scrollStream(invContainer.value),
 );
 
-onMounted(() => {
+const highlightsStore = useHighlightsStore();
+
+onMounted(async () => {
 	console.log("SessionView MOUNTED for", props.session.name);
 	scrollToBottom();
+
+	// Step 2: Load Highlights and Sync
+	await highlightsStore.load();
+	await highlightsStore.syncToSession(props.session.name);
 
 	// Start Ticker (100ms for smooth UI)
 	timerInterval = setInterval(() => {

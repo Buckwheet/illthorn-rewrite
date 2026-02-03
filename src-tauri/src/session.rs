@@ -5,6 +5,7 @@ use tokio::net::TcpStream;
 use tokio::sync::Mutex;
 
 use crate::command_processor::CommandProcessor;
+use crate::highlights::Highlight;
 
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub struct SessionConfig {
@@ -19,6 +20,7 @@ pub struct Session {
     pub config: SessionConfig,
     pub writer: Arc<Mutex<WriteHalf<TcpStream>>>,
     pub processor: Arc<Mutex<CommandProcessor>>,
+    pub highlights: Arc<Mutex<Vec<Highlight>>>,
 }
 
 impl Session {
@@ -62,10 +64,17 @@ impl Session {
             config,
             writer: Arc::new(Mutex::new(writer)),
             processor: Arc::new(Mutex::new(CommandProcessor::new())),
+            highlights: Arc::new(Mutex::new(Vec::new())),
         })
     }
 
     pub async fn send(&self, command: String) -> Result<(), String> {
+        // (omitted contents untouched, relies on context match)
+        // Actually, replace_file_content needs exact match.
+        // I will target the *specific blocks* separately to be safe.
+        // Block 1: Struct Init
+        // Block 2: End of disconnect / New methods
+
         // Process command (Aliases, Macros)
         let processed_command = {
             let mut proc = self.processor.lock().await;
@@ -96,5 +105,15 @@ impl Session {
         let mut writer = self.writer.lock().await;
         writer.shutdown().await.map_err(|e| e.to_string())?;
         Ok(())
+    }
+
+    pub async fn set_highlights(&self, new_highlights: Vec<Highlight>) {
+        let mut h = self.highlights.lock().await;
+        *h = new_highlights;
+    }
+
+    pub async fn get_highlights(&self) -> Vec<Highlight> {
+        let h = self.highlights.lock().await;
+        h.clone()
     }
 }
