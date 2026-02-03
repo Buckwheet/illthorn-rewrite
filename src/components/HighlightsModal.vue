@@ -176,6 +176,7 @@ h3 {
     margin-bottom: 15px;
     padding: 5px;
     min-height: 150px;
+    max-height: 400px;
 }
 
 .empty {
