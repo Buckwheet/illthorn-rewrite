@@ -217,6 +217,11 @@ h3 {
     display: flex;
     gap: 8px;
     align-items: center;
+    margin-bottom: 8px;
+}
+
+.form-row:last-child {
+    margin-bottom: 0;
 }
 
 .input-pattern {
@@ -225,6 +230,14 @@ h3 {
     background: #000;
     border: 1px solid #444;
     color: white;
+}
+
+.options-row {
+    justify-content: flex-start;
+}
+
+.spacer {
+    flex: 1;
 }
 
 .color-picker-group {
