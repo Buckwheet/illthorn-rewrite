@@ -4,6 +4,8 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt, WriteHalf};
 use tokio::net::TcpStream;
 use tokio::sync::Mutex;
 
+use crate::command_processor::CommandProcessor;
+
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
 pub struct SessionConfig {
     pub name: String,
@@ -16,6 +18,7 @@ pub struct Session {
     #[allow(dead_code)]
     pub config: SessionConfig,
     pub writer: Arc<Mutex<WriteHalf<TcpStream>>>,
+    pub processor: Arc<Mutex<CommandProcessor>>,
 }
 
 impl Session {
@@ -58,18 +61,27 @@ impl Session {
         Ok(Self {
             config,
             writer: Arc::new(Mutex::new(writer)),
+            processor: Arc::new(Mutex::new(CommandProcessor::new())),
         })
     }
 
     pub async fn send(&self, command: String) -> Result<(), String> {
-        let mut writer = self.writer.lock().await;
-        // Append \r\n to ensure the server/Lich detects the end of the command
-        let data = format!("{}\r\n", command);
-        writer
-            .write_all(data.as_bytes())
-            .await
-            .map_err(|e| e.to_string())?;
-        writer.flush().await.map_err(|e| e.to_string())?;
+        // Process command (Aliases, Macros)
+        let processed_command = {
+            let mut proc = self.processor.lock().await;
+            proc.process(&command)
+        };
+
+        if let Some(final_cmd) = processed_command {
+            let mut writer = self.writer.lock().await;
+            // Append \r\n to ensure the server/Lich detects the end of the command
+            let data = format!("{}\r\n", final_cmd);
+            writer
+                .write_all(data.as_bytes())
+                .await
+                .map_err(|e| e.to_string())?;
+            writer.flush().await.map_err(|e| e.to_string())?;
+        }
         Ok(())
     }
 

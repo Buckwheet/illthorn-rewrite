@@ -30,6 +30,12 @@ By leveraging **Rust** for the backend (via Tauri), we achieve minimal resource 
   - Dedicated windows for **Room**, **Thoughts**, **Deaths**, **Arrivals**, **Loot**, **Bounty**, **Society**, **Speech**, etc.
   - Prevents "Room Spam" by routing room objects to a dedicated panel.
 - **Active Spell Tracking**: Real-time display of active spells and effects.
+- **Power User Tools (New!)**:
+  - **Aliases**: Create custom command shortcuts (`#alias set k kill`).
+  - **Macros**: Bind commands to Function keys and Numpad (`#macro set F1 attack`).
+  - **Highlights**: Colorize important text patterns (`#highlight add kobold red`).
+  - **Status Indicators**: Visual icons for Stunned, Prone, Bleeding, etc.
+  - **Visual Timers**: RoundTime and CastTime progress bars.
 - **Modern UI**: Dark mode, customizable panels, and familiar layout.
 
 

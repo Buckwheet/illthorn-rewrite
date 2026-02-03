@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use std::sync::Mutex;
 use tauri::{AppHandle, Listener, Manager, State};
 
+mod command_processor;
 mod session;
 
 struct SessionState(Mutex<HashMap<String, Session>>);
@@ -202,6 +203,45 @@ async fn save_debug_log(content: String) -> Result<String, String> {
     Ok(path.to_string_lossy().to_string())
 }
 
+#[tauri::command]
+async fn set_alias(
+    session: String,
+    key: String,
+    value: String,
+    state: State<'_, SessionState>,
+) -> Result<(), String> {
+    let sess = {
+        let sessions = state.0.lock().map_err(|e| e.to_string())?;
+        sessions
+            .get(&session)
+            .cloned()
+            .ok_or_else(|| format!("Session {} not found", session))?
+    };
+
+    let mut proc = sess.processor.lock().await;
+    proc.set_alias(key, value);
+    Ok(())
+}
+
+#[tauri::command]
+async fn remove_alias(
+    session: String,
+    key: String,
+    state: State<'_, SessionState>,
+) -> Result<(), String> {
+    let sess = {
+        let sessions = state.0.lock().map_err(|e| e.to_string())?;
+        sessions
+            .get(&session)
+            .cloned()
+            .ok_or_else(|| format!("Session {} not found", session))?
+    };
+
+    let mut proc = sess.processor.lock().await;
+    proc.remove_alias(&key);
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -214,7 +254,9 @@ pub fn run() {
             disconnect_session,
             list_sessions,
             debug_diagnostics,
-            save_debug_log
+            save_debug_log,
+            set_alias,
+            remove_alias
         ])
         .setup(|app| {
             let app_handle = app.handle().clone();

@@ -97,14 +97,49 @@ onMounted(() => {
 	console.log("SessionView MOUNTED for", props.session.name);
 	scrollToBottom();
 
-	// Start Ticker
+	// Start Ticker (100ms for smooth UI)
 	timerInterval = setInterval(() => {
 		now.value = Date.now();
-	}, 1000);
+	}, 100);
+
+	window.addEventListener("keydown", handleGlobalKey);
 });
 
 onUnmounted(() => {
 	if (timerInterval) clearInterval(timerInterval);
+	window.removeEventListener("keydown", handleGlobalKey);
+});
+
+// Phase 1.5: Status Icons Mapping
+const statusIcons: Record<string, string> = {
+	kneeling: "🧎",
+	prone: "🛌",
+	sitting: "🪑",
+	standing: "🧍",
+	stunned: "💫",
+	bleeding: "🩸",
+	dead: "💀",
+	invisible: "👻",
+	hidden: "🫣",
+	joined: "🤝",
+	webbed: "🕸️",
+	poisoned: "🤢",
+	diseased: "🦠",
+};
+
+// Phase 1.5: RoundTime/CastTime Computed
+const rtRemaining = computed(() => {
+	if (!props.session.roundTime) return 0;
+	// session.roundTime is Unix Seconds (End Time)
+	// now.value is Unix Millis
+	const diff = props.session.roundTime - now.value / 1000;
+	return Math.max(0, diff);
+});
+
+const ctRemaining = computed(() => {
+	if (!props.session.castTime) return 0;
+	const diff = props.session.castTime - now.value / 1000;
+	return Math.max(0, diff);
 });
 
 function formatRemaining(spell: ActiveSpell) {
@@ -129,6 +164,92 @@ function formatRemaining(spell: ActiveSpell) {
 function send() {
 	if (!commandInput.value) return;
 
+	// Phase 1: Macro Management via CLI
+	if (commandInput.value.startsWith("#macro ")) {
+		const parts = commandInput.value.split(" ");
+		if (parts.length >= 3 && parts[1] === "set") {
+			// #macro set F1 attack
+			const key = parts[2]; // e.g., F1, Numpad1
+			const val = parts.slice(3).join(" ");
+			props.session.macros[key] = val;
+			props.session.feed.push(
+				`<span class="echo">Macro set: ${key} => ${val}</span>`,
+			);
+			commandInput.value = "";
+			return;
+		}
+		if (parts.length === 3 && parts[1] === "remove") {
+			const key = parts[2];
+			delete props.session.macros[key];
+			props.session.feed.push(
+				`<span class="echo">Macro removed: ${key}</span>`,
+			);
+			commandInput.value = "";
+			return;
+		}
+		if (parts[1] === "list") {
+			const list = Object.entries(props.session.macros)
+				.map(([k, v]) => `${k} => ${v}`)
+				.join("\n");
+			props.session.feed.push(
+				`<span class="echo">Macros:\n${list || "None"}</span>`,
+			);
+			commandInput.value = "";
+			return;
+		}
+	}
+
+	// Phase 1: Highlights Management via CLI
+	if (commandInput.value.startsWith("#highlight ")) {
+		const parts = commandInput.value.split(" ");
+		// #highlight add (pattern) (color)
+		// Need to handle patterns with spaces? "foo bar" red
+		// Simplified parser: last arg is color, rest is pattern?
+		// Or quote support?
+		// For "Basic", let's assume: #highlight add pattern color
+
+		if (parts.length >= 4 && parts[1] === "add") {
+			const color = parts[parts.length - 1];
+			// Pattern is everything between add and color
+			const pattern = parts.slice(2, parts.length - 1).join(" ");
+
+			// Remove existing if any
+			props.session.highlights = props.session.highlights.filter(
+				(h) => h.pattern !== pattern,
+			);
+
+			props.session.highlights.push({ pattern, color, isRegex: true });
+			props.session.feed.push(
+				`<span class="echo">Highlight added: "${pattern}" -> ${color}</span>`,
+			);
+			commandInput.value = "";
+			return;
+		}
+
+		if (parts.length >= 3 && parts[1] === "remove") {
+			const pattern = parts.slice(2).join(" ");
+			props.session.highlights = props.session.highlights.filter(
+				(h) => h.pattern !== pattern,
+			);
+			props.session.feed.push(
+				`<span class="echo">Highlight removed: "${pattern}"</span>`,
+			);
+			commandInput.value = "";
+			return;
+		}
+
+		if (parts[1] === "list") {
+			const list = props.session.highlights
+				.map((h) => `"${h.pattern}" -> ${h.color}`)
+				.join("\n");
+			props.session.feed.push(
+				`<span class="echo">Highlights:\n${list || "None"}</span>`,
+			);
+			commandInput.value = "";
+			return;
+		}
+	}
+
 	// History
 	if (
 		commandHistory.value.length === 0 ||
@@ -144,6 +265,25 @@ function send() {
 
 function sendDir(dir: string) {
 	store.sendCommand(dir);
+}
+
+// Phase 1: Global Key Listener for Macros
+function handleGlobalKey(e: KeyboardEvent) {
+	// Ignore if input is focused (unless it's a Function key which is usually safe?)
+	// Actually F-keys are fine, but Numpad might be typing numbers.
+	// For "Power User Basics", we often want F-keys to work even while typing.
+	// But let's be safe: if target is input, ignore unless F-key.
+	const target = e.target as HTMLElement;
+	if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") {
+		if (!e.key.startsWith("F")) return;
+	}
+
+	const code = e.code; // e.g. "F1", "Numpad1"
+
+	if (props.session.macros[code]) {
+		e.preventDefault();
+		store.sendCommand(props.session.macros[code]);
+	}
 }
 
 function toggleScrollMode() {
@@ -346,6 +486,19 @@ async function dumpSpells() {
            <div class="vital-row"><span class="label">stance</span> <span class="value stance">{{ session.vitals.stanceText }}</span></div>
            <div class="vital-row"><span class="label">mind</span> <span class="value mind">{{ session.vitals.mindText }}</span></div>
            <div class="vital-row" v-if="session.vitals.nextLevelText"><span class="label">next level</span> <span class="value yellow">{{ session.vitals.nextLevelText }}</span></div>
+           
+           <!-- Phase 1.5: Status Icons -->
+           <div class="vital-row status-row" v-if="Object.values(session.indicators).some(v => v)">
+               <span 
+                   v-for="(active, key) in session.indicators" 
+                   :key="key" 
+                   v-show="active" 
+                   class="status-icon" 
+                   :title="key"
+               >
+                   {{ statusIcons[key] || key }}
+               </span>
+           </div>
         </div>
       </div>
       
@@ -478,6 +631,17 @@ async function dumpSpells() {
         <div v-for="(line, index) in session.feed" :key="index" class="feed-line" v-html="line"></div>
       </div>
 
+      <div class="timers-layer" v-if="rtRemaining > 0 || ctRemaining > 0">
+         <div class="timer-bar roundtime" v-if="rtRemaining > 0">
+            <span class="timer-label">RT: {{ rtRemaining.toFixed(1) }}s</span>
+            <div class="progress" :style="{ width: (rtRemaining * 10) + '%' }"></div>
+         </div>
+         <div class="timer-bar casttime" v-if="ctRemaining > 0">
+             <span class="timer-label">Cast: {{ ctRemaining.toFixed(1) }}s</span>
+             <div class="progress" :style="{ width: (ctRemaining * 10) + '%' }"></div>
+         </div>
+      </div>
+
       <div class="cli-wrapper">
          <div class="prompt">&gt;</div>
          <input 
@@ -570,6 +734,7 @@ async function dumpSpells() {
   max-height: 100vh;
   background: #000;
   min-width: 0;
+  position: relative; /* For absolute positioning of timers */
 }
 
 /* Hands Bar */
@@ -720,4 +885,61 @@ async function dumpSpells() {
     color: #fff;
     font-weight: bold;
     text-shadow: 0 0 5px #00bc8c; /* Highlight */
-}</style>
+}
+
+/* Phase 1.5: Timer Bars */
+.timers-layer {
+    position: absolute;
+    bottom: 4em; /* Just above CLI */
+    left: 0;
+    right: 0;
+    padding: 0 10px;
+    pointer-events: none; /* Let clicks pass through */
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.timer-bar {
+    height: 16px;
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid #444;
+    position: relative;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.timer-bar.roundtime .progress { background: #d35f5f; } /* Reddish for RT */
+.timer-bar.casttime .progress { background: #5fd38d; } /* Greenish for Cast */
+
+.progress {
+    height: 100%;
+    transition: width 0.1s linear;
+}
+
+.timer-label {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    font-size: 11px;
+    color: white;
+    text-shadow: 1px 1px 2px black;
+    line-height: 16px;
+    z-index: 2;
+}
+
+
+.status-row {
+    margin-top: 5px;
+    border-top: 1px solid #333;
+    padding-top: 5px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.status-icon {
+    font-size: 1.2em;
+    margin: 0 3px;
+    cursor: help;
+}
+</style>

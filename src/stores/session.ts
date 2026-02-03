@@ -41,6 +41,12 @@ export interface ActiveSpell {
 	receivedAt?: number;
 }
 
+export interface Highlight {
+	pattern: string;
+	color: string;
+	isRegex: boolean;
+}
+
 export interface SessionConfig {
 	name: string;
 	host: string;
@@ -61,6 +67,11 @@ export interface Session {
 	activeSpells: Record<string, ActiveSpell>; // ID -> Content
 	injuries: Record<string, number>; // Body Part -> Severity (0=None, 1-3=Injury, 4-6=Scar)
 	exits: string[]; // ['n', 's', 'out', ...]
+	roundTime: number; // End Timestamp (Unix Seconds)
+	castTime: number; // End Timestamp (Unix Seconds)
+	indicators: Record<string, boolean>;
+	macros: Record<string, string>; // KeyCode -> Command
+	highlights: Highlight[];
 
 	// New Phase 30 Streams
 	arrivals: string[]; // logons
@@ -159,8 +170,28 @@ export const useSessionStore = defineStore("session", () => {
 			// Append clean text to feed
 			if (result.cleanText) {
 				if (result.cleanText.trim()) {
+					// Phase 1: Highlights
+					let text = result.cleanText;
+					if (session.highlights && session.highlights.length > 0) {
+						for (const h of session.highlights) {
+							try {
+								// Simple replacement for now.
+								// Note: Text is already HTML-escaped by parser, but we are injecting HTML spans.
+								// We must be careful not to break existing tags if parser is imperfect,
+								// but usually cleanText is just text.
+								const regex = new RegExp(h.pattern, "gi");
+								text = text.replace(
+									regex,
+									(match) => `<span style="color:${h.color}">${match}</span>`,
+								);
+							} catch (e) {
+								console.error("Invalid highlight regex:", h.pattern, e);
+							}
+						}
+					}
+
 					if (session.feed.length > 2000) session.feed.shift();
-					session.feed.push(result.cleanText);
+					session.feed.push(text);
 				}
 			}
 
@@ -265,6 +296,32 @@ export const useSessionStore = defineStore("session", () => {
 						}
 
 						if (session.debugLog.length > 200) session.debugLog.shift();
+					}
+
+					// RoundTime & CastTime
+					if (tag.name === "roundTime") {
+						const val = Number(tag.attributes.value);
+						if (!Number.isNaN(val)) {
+							session.roundTime = val;
+						}
+					}
+					if (tag.name === "castTime") {
+						const val = Number(tag.attributes.value);
+						if (!Number.isNaN(val)) {
+							session.castTime = val;
+						}
+					}
+
+					// Phase 1.5: Indicators
+					if (tag.name === "indicator") {
+						// <indicator id="IconKneeling" visible="y"/>
+						const rawId = tag.attributes.id || "";
+						const visible = tag.attributes.visible === "y";
+
+						if (rawId.startsWith("Icon")) {
+							const key = rawId.substring(4).toLowerCase(); // IconKneeling -> kneeling
+							session.indicators[key] = visible;
+						}
 					}
 
 					// Compass Handling
@@ -515,6 +572,7 @@ export const useSessionStore = defineStore("session", () => {
 			);
 			invoke("send_raw_command", { session: config.name, command: "\r\n" });
 
+			// Indicators (Phase 1.5)
 			// Enhanced Logging
 			console.log(
 				`[Connection] Successfully invoked connect_session for ${config.name}`,
@@ -547,12 +605,17 @@ export const useSessionStore = defineStore("session", () => {
 
 				debugLog: [],
 				exits: [],
+				roundTime: 0,
+				castTime: 0,
 				vitals: { ...defaultVitals }, // Clone defaults
 				hands: { ...defaultHands }, // Clone defaults
 				activeHand: null,
 				parsingActiveSpells: false,
 				parsingInjuries: false,
 				parser: null, // Placeholder or remove field from interface
+				indicators: {}, // Initial State
+				macros: {},
+				highlights: [],
 			};
 
 			sessions.value.set(config.name, newSession);
