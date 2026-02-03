@@ -18,6 +18,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
       - name: Install Node.js
         uses: actions/setup-node@v4
@@ -38,6 +40,21 @@ jobs:
       - name: Install dependencies (frontend)
         run: npm install
 
+      - name: Generate Release Notes
+        shell: bash
+        run: |
+          LAST_MSG=$(git log -1 --pretty=%s)
+          echo "Last commit message: $LAST_MSG"
+          # Default npm version message is just the version number e.g. "0.0.8"
+          if [[ "$LAST_MSG" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+             PREV_MSG=$(git log -1 --skip=1 --pretty=%s)
+             echo "Detected version bump commit. Using previous message: $PREV_MSG"
+             echo "RELEASE_NOTES=$PREV_MSG" >> $GITHUB_ENV
+          else
+             echo "Using current message: $LAST_MSG"
+             echo "RELEASE_NOTES=$LAST_MSG" >> $GITHUB_ENV
+          fi
+
       - name: Build and Release
         uses: tauri-apps/tauri-action@v0
         env:
@@ -45,6 +62,6 @@ jobs:
         with:
           tagName: v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version
           releaseName: "Illthorn v__VERSION__"
-          releaseBody: "See the assets to download this version and install."
+          releaseBody: "${{ env.RELEASE_NOTES }}"
           releaseDraft: true
           prerelease: false
