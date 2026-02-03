@@ -1,0 +1,33 @@
+# Tasks
+
+- [x] Load implementation plan <!-- id: 1 -->
+- [/] **Feature: Highlights System** (Granular Breakdown) <!-- id: 2 -->
+    - [x] **Step 1: Application State Persistence** <!-- id: 3 -->
+        - Implementation of `tauri-plugin-store` or equivalent.
+        - Create backend `Store` service.
+        - *Goal: App can save/load a file to disk.*
+    - [ ] **Step 2: Highlights Data Structure & Loading** <!-- id: 4 -->
+        - Define `Highlight` struct (pattern, color, is_regex, sound).
+        - Connect `Session` to load highlights on startup.
+        - *Goal: Hardcoded highlights in JSON file appear in app.*
+    - [ ] **Step 3: Highlights Menu Logic (CRUD)** <!-- id: 5 -->
+        - Create `HighlightsModal.vue`.
+        - Add List, Add, Remove functionality.
+        - *Goal: User can add/remove simple highlights via UI.*
+    - [ ] **Step 4: Color Customization** <!-- id: 6 -->
+        - Integrate color picker to `HighlightsModal`.
+        - Apply custom colors to stream parsing.
+        - *Goal: User can pick any hex color.*
+    - [ ] **Step 5: Sound Triggers** <!-- id: 7 -->
+        - Add ability to play sound file on match.
+        - *Goal: User can assign sounds to patterns.*
+    - [ ] **Step 6: Regex Support** <!-- id: 8 -->
+        - Advanced UI toggle for "Is Regex".
+        - Backend support for compiling regex safely.
+        - *Goal: Power users can use regex.*
+- [ ] **Feature: Macros System** (Granular Breakdown) <!-- id: 9 -->
+    - [ ] Step 1: Macro Persistence (Data Layer) <!-- id: 10 -->
+    - [ ] Step 2: Keybinding UI <!-- id: 11 -->
+- [x] Phase 1.5: Core Indicators <!-- id: 12 -->
+    - [x] RoundTime / CastTime Indicators <!-- id: 13 -->
+    - [x] Status Icons <!-- id: 14 -->
