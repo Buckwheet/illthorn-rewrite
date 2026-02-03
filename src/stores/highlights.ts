@@ -11,6 +11,7 @@ export interface Highlight {
 	color: string;
 	is_regex: boolean;
 	sound_file?: string;
+	scope?: string;
 }
 
 const STORE_PATH = "highlights.json";
@@ -44,24 +45,29 @@ export const useHighlightsStore = defineStore("highlights", () => {
 	// Push to backend session AND local session store
 	async function syncToSession(sessionId: string) {
 		try {
+			// Filter highlights for this session
+			const scopedList = list.filter(
+				(h) => !h.scope || h.scope === "global" || h.scope === sessionId,
+			);
+
 			// 1. Update Rust Backend
 			await invoke("update_highlights", {
 				session: sessionId,
-				highlights: list,
+				highlights: scopedList,
 			});
 
 			// 2. Update Local Session Store (for Rendering)
 			const sessionStore = useSessionStore();
 			const session = sessionStore.sessions.get(sessionId);
 			if (session) {
-				session.highlights = [...list]; // Update the live session's highlights
+				session.highlights = [...scopedList]; // Update the live session's highlights
 				console.log(
-					`Synced ${list.length} highlights to local session ${sessionId}`,
+					`Synced ${scopedList.length} highlights to local session ${sessionId}`,
 				);
 			}
 
 			console.log(
-				`Synced ${list.length} highlights to backend session ${sessionId}`,
+				`Synced ${scopedList.length} highlights to backend session ${sessionId}`,
 			);
 		} catch (e) {
 			console.error("Failed to sync highlights:", e);

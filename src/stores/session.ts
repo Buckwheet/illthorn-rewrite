@@ -46,6 +46,7 @@ export interface Highlight {
 	color: string;
 	is_regex: boolean;
 	sound_file?: string;
+	scope?: string;
 }
 
 export interface SessionConfig {

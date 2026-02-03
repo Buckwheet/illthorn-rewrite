@@ -15,6 +15,7 @@ const newPattern = ref("");
 const newColor = ref("#FFFF00");
 const newIsRegex = ref(false);
 const newSoundFile = ref<string | undefined>(undefined);
+const isGlobal = ref(true);
 
 async function browseSound() {
 	const file = await open({
@@ -50,11 +51,13 @@ function add() {
 		color: newColor.value,
 		is_regex: newIsRegex.value,
 		sound_file: newSoundFile.value,
+		scope: isGlobal.value ? "global" : props.sessionName,
 	});
 
 	// Reset form
 	newPattern.value = "";
 	newSoundFile.value = undefined;
+	// isGlobal.value = true; // reset to global preference?
 	// Keep color/regex as is for convenience? Or reset?
 }
 
@@ -79,7 +82,10 @@ async function saveAndClose() {
                 <div v-if="store.list.length === 0" class="empty">No highlights defined.</div>
                 <div v-else class="highlight-row" v-for="h in store.list" :key="h.id">
                     <span class="preview" :style="{ color: h.color }">{{ h.pattern }}</span>
-                    <span class="meta">{{ h.is_regex ? '(Regex)' : '' }}</span>
+                    <span class="meta">
+                        {{ (!h.scope || h.scope === 'global') ? '🌍' : '👤' }}
+                        {{ h.is_regex ? '(Regex)' : '' }}
+                    </span>
                     <button class="btn small danger" @click="remove(h.id)">X</button>
                 </div>
             </div>
@@ -95,6 +101,9 @@ async function saveAndClose() {
                                 @click="selectPreset(c)" :title="c"></div>
                         </div>
                     </div>
+                    <label class="checkbox-label">
+                        <input type="checkbox" v-model="isGlobal" /> Global
+                    </label>
                     <label class="checkbox-label">
                         <input type="checkbox" v-model="newIsRegex" /> Regex
                     </label>

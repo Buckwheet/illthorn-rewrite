@@ -21,10 +21,11 @@
     - [x] **Step 5: Sound Triggers** <!-- id: 7 -->
         - Add ability to play sound file on match.
         - *Goal: User can assign sounds to patterns.*
-    - [ ] **Step 6: Regex Support** <!-- id: 8 -->
-        - Advanced UI toggle for "Is Regex".
-        - Backend support for compiling regex safely.
-        - *Goal: Power users can use regex.*
+    - [x] **Step 6: Scoped Highlights (Global vs Profile)** <!-- id: 8 -->
+        - Add `scope` field to Highlight struct (Global / Profile default).
+        - Update Modal to toggle Global vs Current Session.
+        - Update `syncToSession` to filter + merge.
+        - *Goal: "Sit" highlights everywhere. "Stance" highlights only on Warrior.*
 - [ ] **Feature: Macros System** (Granular Breakdown) <!-- id: 9 -->
     - [ ] Step 1: Macro Persistence (Data Layer) <!-- id: 10 -->
     - [ ] Step 2: Keybinding UI <!-- id: 11 -->

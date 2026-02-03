@@ -7,6 +7,7 @@ pub struct Highlight {
     pub color: String,
     pub is_regex: bool,
     pub sound_file: Option<String>,
+    pub scope: Option<String>, // "global" or "SessionName"
 }
 
 impl Highlight {
@@ -18,6 +19,7 @@ impl Highlight {
             color,
             is_regex,
             sound_file: None,
+            scope: Some("global".to_string()),
         }
     }
 }
