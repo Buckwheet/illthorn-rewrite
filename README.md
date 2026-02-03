@@ -34,6 +34,10 @@ By leveraging **Rust** for the backend (via Tauri), we achieve minimal resource 
   - **Aliases**: Create custom command shortcuts (`#alias set k kill`).
   - **Macros**: Bind commands to Function keys and Numpad (`#macro set F1 attack`).
   - **Highlights**: Colorize important text patterns (`#highlight add kobold red`).
+    - **Custom Colors**: Pick any color or use the preset palette.
+    - **Sound Triggers**: Play a local sound file when a match occurs.
+    - **Scopes**: Choose between **Global** (all characters) or **Local** (current session only) highlights.
+    - **Regex Support**: Use Regular Expressions for advanced matching.
   - **Status Indicators**: Visual icons for Stunned, Prone, Bleeding, etc.
   - **Visual Timers**: RoundTime and CastTime progress bars.
 - **Modern UI**: Dark mode, customizable panels, and familiar layout.
