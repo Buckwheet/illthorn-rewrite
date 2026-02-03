@@ -18,7 +18,9 @@ These rules are **MANDATORY** for all development sessions.
     1.  **Verify**: Confirm the specific goal of the step is met.
     2.  **Commit**: `git add .` -> `git commit -m "feat: [Step Name] ..."`
         > **Note**: This commit message will automatically become the Release Note on GitHub.
-    3.  **Version Bump**: `npm version patch` (default).
+    3.  **Version Bump**: 
+        *   Run `npm version patch` (default).
+        *   **CRITICAL**: Manually update `"version"` in `src-tauri/tauri.conf.json` to match `package.json`.
     4.  **Sync**: `git push --follow-tags` (Essential to trigger CI build).
     5.  **Verify Build**: Run `gh run list --limit 1`. If no run appears, force it: `gh workflow run release.yml --ref v[VERSION]`
     6.  **Stop**: Halt and ask user for permission to proceed to the next step.
