@@ -66,6 +66,15 @@ Illthorn acts as a modern screen for Lich. You need to start Lich in "Headless M
     ```
     *(Replace `CHARACTER_NAME` with your actual character's name)*
 5.  **Run this shortcut**. You won't see a game window, but Lich is now running in the background!
+    *   **Note for Lich 5.13+**: If upgrading, you may see an error about "Conversion Needed". Run `ruby lich.rbw --convert-entries standard` in your Lich folder to migrate your data.
+
+### Step 1.5: Headless Account Setup (New!)
+If you haven't saved your character yet and don't have a GUI:
+```powershell
+# In your Lich folder:
+ruby lich.rbw --add-account <ACCOUNT> <PASSWORD> --frontend stormfront
+ruby lich.rbw --login <CHARACTER> --save --without-frontend --detachable-client=11024
+```
 
 ### Step 2: Launch Illthorn
 1.  Run **Illthorn**.
