@@ -16,6 +16,21 @@ const newPattern = ref("");
 const newColor = ref("#FFFF00");
 const newIsRegex = ref(false);
 
+const presetColors = [
+	"#FF0000",
+	"#00FF00",
+	"#0000FF",
+	"#FFFF00",
+	"#FF00FF",
+	"#00FFFF",
+	"#FFFFFF",
+	"#808080",
+];
+
+function selectPreset(c: string) {
+	newColor.value = c;
+}
+
 function add() {
 	if (!newPattern.value) return;
 
@@ -61,7 +76,13 @@ async function saveAndClose() {
                 <h3>Add New</h3>
                 <div class="form-row">
                     <input v-model="newPattern" placeholder="Pattern" class="input-pattern" />
-                    <input v-model="newColor" type="color" class="input-color" title="Color" />
+                    <div class="color-picker-group">
+                        <input v-model="newColor" type="color" class="input-color" title="Custom Color" />
+                        <div class="palette">
+                            <div v-for="c in presetColors" :key="c" class="swatch" :style="{ background: c }"
+                                @click="selectPreset(c)" :title="c"></div>
+                        </div>
+                    </div>
                     <label class="checkbox-label">
                         <input type="checkbox" v-model="newIsRegex" /> Regex
                     </label>
@@ -178,13 +199,43 @@ h3 {
     color: white;
 }
 
+.color-picker-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #111;
+    padding: 4px;
+    border-radius: 4px;
+    border: 1px solid #444;
+}
+
+.palette {
+    display: flex;
+    gap: 4px;
+}
+
+.swatch {
+    width: 16px;
+    height: 16px;
+    border-radius: 2px;
+    cursor: pointer;
+    border: 1px solid #555;
+}
+
+.swatch:hover {
+    border-color: #fff;
+    transform: scale(1.1);
+}
+
 .input-color {
-    width: 40px;
-    height: 30px;
+    width: 30px;
+    height: 24px;
     border: none;
     padding: 0;
     background: none;
+    cursor: pointer;
 }
+
 
 .checkbox-label {
     font-size: 0.8em;

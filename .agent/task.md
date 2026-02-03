@@ -14,7 +14,7 @@
         - Create `HighlightsModal.vue`.
         - Add List, Add, Remove functionality.
         - *Goal: User can add/remove simple highlights via UI.*
-    - [ ] **Step 4: Color Customization** <!-- id: 6 -->
+    - [x] **Step 4: Color Customization** <!-- id: 6 -->
         - Integrate color picker to `HighlightsModal`.
         - Apply custom colors to stream parsing.
         - *Goal: User can pick any hex color.*
