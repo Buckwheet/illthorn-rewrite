@@ -62,19 +62,35 @@ Illthorn acts as a modern screen for Lich. You need to start Lich in "Headless M
 3.  Right-click the new shortcut and select **Properties**.
 4.  In the **Target** field, add the following to the very end of the line (after the quotes):
     ```text
-    --login CHARACTER_NAME --without-frontend --detachable-client=11024
+    --login CHARACTER_NAME --gemstone --without-frontend --detachable-client=11024
     ```
+
+    **Common Game Flags:**
+    *   `--gemstone` (or `--gs`): GemsStone IV Prime (Default)
+    *   `--test`: Connect to the Test Server (e.g., `--gemstone --test`)
+    *   `--platinum`: Connect to Platinum
+    *   `--shattered`: Connect to Shattered
+    
     *(Replace `CHARACTER_NAME` with your actual character's name)*
 5.  **Run this shortcut**. You won't see a game window, but Lich is now running in the background!
     *   **Note for Lich 5.13+**: If upgrading, you may see an error about "Conversion Needed". Run `ruby lich.rbw --convert-entries standard` in your Lich folder to migrate your data.
 
-### Step 1.5: Headless Account Setup (New!)
+### Step 1.5: Headless Account Setup
+**For Lich 5.13+ (New CLI Tools):**
 If you haven't saved your character yet and don't have a GUI:
 ```powershell
-# In your Lich folder:
+# Add your account
 ruby lich.rbw --add-account <ACCOUNT> <PASSWORD> --frontend stormfront
-ruby lich.rbw --login <CHARACTER> --save --without-frontend --detachable-client=11024
+
+# Login and save character
+ruby lich.rbw --login <CHARACTER> --save --gemstone --without-frontend --detachable-client=11024
 ```
+
+**For Legacy Lich (< 5.13):**
+You typically need to launch Lich with a GUI (Wizard/StormFront) at least once to save your login information.
+1. Run `lich.rbw` normally.
+2. Login to your character once.
+3. Exit and proceed to Step 1 (Headless Mode).
 
 ### Step 2: Launch Illthorn
 1.  Run **Illthorn**.
