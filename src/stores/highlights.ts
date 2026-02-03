@@ -2,6 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { LazyStore } from "@tauri-apps/plugin-store";
 import { defineStore } from "pinia";
 import { reactive } from "vue";
+import { useSessionStore } from "./session";
 
 // Mirror the Rust struct
 export interface Highlight {
@@ -40,14 +41,28 @@ export const useHighlightsStore = defineStore("highlights", () => {
 		await store.save(); // Persist to disk
 	}
 
-	// Push to backend session
+	// Push to backend session AND local session store
 	async function syncToSession(sessionId: string) {
 		try {
+			// 1. Update Rust Backend
 			await invoke("update_highlights", {
 				session: sessionId,
 				highlights: list,
 			});
-			console.log(`Synced ${list.length} highlights to session ${sessionId}`);
+
+			// 2. Update Local Session Store (for Rendering)
+			const sessionStore = useSessionStore();
+			const session = sessionStore.sessions.get(sessionId);
+			if (session) {
+				session.highlights = [...list]; // Update the live session's highlights
+				console.log(
+					`Synced ${list.length} highlights to local session ${sessionId}`,
+				);
+			}
+
+			console.log(
+				`Synced ${list.length} highlights to backend session ${sessionId}`,
+			);
 		} catch (e) {
 			console.error("Failed to sync highlights:", e);
 		}

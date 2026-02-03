@@ -44,69 +44,80 @@ async function saveAndClose() {
 </script>
 
 <template>
-  <div class="modal-overlay" @click.self="$emit('close')">
-    <div class="modal-content">
-      <h2>Highlights</h2>
-      
-      <div class="list-container">
-          <div v-if="store.list.length === 0" class="empty">No highlights defined.</div>
-          <div v-else class="highlight-row" v-for="h in store.list" :key="h.id">
-              <span class="preview" :style="{ color: h.color }">{{ h.pattern }}</span>
-              <span class="meta">{{ h.is_regex ? '(Regex)' : '' }}</span>
-              <button class="btn small danger" @click="remove(h.id)">X</button>
-          </div>
-      </div>
+    <div class="modal-overlay" @click.self="$emit('close')">
+        <div class="modal-content">
+            <h2>Highlights</h2>
 
-      <div class="add-form">
-          <h3>Add New</h3>
-          <div class="form-row">
-              <input v-model="newPattern" placeholder="Pattern" class="input-pattern" />
-              <input v-model="newColor" type="color" class="input-color" title="Color" />
-              <label class="checkbox-label">
-                  <input type="checkbox" v-model="newIsRegex" /> Regex
-              </label>
-              <button class="btn primary small" @click="add">Add</button>
-          </div>
-      </div>
+            <div class="list-container">
+                <div v-if="store.list.length === 0" class="empty">No highlights defined.</div>
+                <div v-else class="highlight-row" v-for="h in store.list" :key="h.id">
+                    <span class="preview" :style="{ color: h.color }">{{ h.pattern }}</span>
+                    <span class="meta">{{ h.is_regex ? '(Regex)' : '' }}</span>
+                    <button class="btn small danger" @click="remove(h.id)">X</button>
+                </div>
+            </div>
 
-      <div class="actions">
-        <button class="btn secondary" @click="$emit('close')">Cancel</button>
-        <button class="btn primary" @click="saveAndClose">Save & Close</button>
-      </div>
+            <div class="add-form">
+                <h3>Add New</h3>
+                <div class="form-row">
+                    <input v-model="newPattern" placeholder="Pattern" class="input-pattern" />
+                    <input v-model="newColor" type="color" class="input-color" title="Color" />
+                    <label class="checkbox-label">
+                        <input type="checkbox" v-model="newIsRegex" /> Regex
+                    </label>
+                    <button class="btn primary small" @click="add">Add</button>
+                </div>
+            </div>
+
+            <div class="actions">
+                <button class="btn secondary" @click="$emit('close')">Cancel</button>
+                <button class="btn primary" @click="saveAndClose">Save & Close</button>
+            </div>
+        </div>
     </div>
-  </div>
 </template>
 
 <style scoped>
 .modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 2000; /* Higher than connection modal? */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    /* Higher than connection modal? */
 }
 
 .modal-content {
-  background: #1a1a1a;
-  border: 1px solid #333;
-  padding: 20px;
-  border-radius: 8px;
-  width: 500px;
-  max-width: 90vw;
-  color: #eee;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-  display: flex;
-  flex-direction: column;
-  max-height: 80vh;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    padding: 20px;
+    border-radius: 8px;
+    width: 500px;
+    max-width: 90vw;
+    color: #eee;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    max-height: 80vh;
 }
 
-h2 { margin-top: 0; color: #fff; border-bottom: 1px solid #333; padding-bottom: 10px; }
-h3 { margin: 10px 0 5px 0; font-size: 0.9em; color: #bbb; }
+h2 {
+    margin-top: 0;
+    color: #fff;
+    border-bottom: 1px solid #333;
+    padding-bottom: 10px;
+}
+
+h3 {
+    margin: 10px 0 5px 0;
+    font-size: 0.9em;
+    color: #bbb;
+}
 
 .list-container {
     flex: 1;
@@ -118,7 +129,11 @@ h3 { margin: 10px 0 5px 0; font-size: 0.9em; color: #bbb; }
     min-height: 150px;
 }
 
-.empty { color: #555; text-align: center; padding: 20px; }
+.empty {
+    color: #555;
+    text-align: center;
+    padding: 20px;
+}
 
 .highlight-row {
     display: flex;
@@ -127,9 +142,21 @@ h3 { margin: 10px 0 5px 0; font-size: 0.9em; color: #bbb; }
     padding: 4px;
     border-bottom: 1px solid #222;
 }
-.highlight-row:last-child { border-bottom: none; }
-.preview { flex: 1; font-weight: bold; }
-.meta { font-size: 0.8em; color: #666; margin-right: 10px; }
+
+.highlight-row:last-child {
+    border-bottom: none;
+}
+
+.preview {
+    flex: 1;
+    font-weight: bold;
+}
+
+.meta {
+    font-size: 0.8em;
+    color: #666;
+    margin-right: 10px;
+}
 
 .add-form {
     background: #222;
@@ -150,6 +177,7 @@ h3 { margin: 10px 0 5px 0; font-size: 0.9em; color: #bbb; }
     border: 1px solid #444;
     color: white;
 }
+
 .input-color {
     width: 40px;
     height: 30px;
@@ -157,6 +185,7 @@ h3 { margin: 10px 0 5px 0; font-size: 0.9em; color: #bbb; }
     padding: 0;
     background: none;
 }
+
 .checkbox-label {
     font-size: 0.8em;
     display: flex;
@@ -179,11 +208,36 @@ h3 { margin: 10px 0 5px 0; font-size: 0.9em; color: #bbb; }
     cursor: pointer;
     font-weight: bold;
 }
-.btn.primary { background: #00bc8c; color: white; }
-.btn.primary:hover { background: #00a37b; }
-.btn.secondary { background: #333; color: #ccc; }
-.btn.secondary:hover { background: #444; }
-.btn.danger { background: #e74c3c; color: white; }
-.btn.danger:hover { background: #c0392b; }
-.btn.small { padding: 4px 8px; font-size: 0.8em; }
+
+.btn.primary {
+    background: #00bc8c;
+    color: white;
+}
+
+.btn.primary:hover {
+    background: #00a37b;
+}
+
+.btn.secondary {
+    background: #333;
+    color: #ccc;
+}
+
+.btn.secondary:hover {
+    background: #444;
+}
+
+.btn.danger {
+    background: #e74c3c;
+    color: white;
+}
+
+.btn.danger:hover {
+    background: #c0392b;
+}
+
+.btn.small {
+    padding: 4px 8px;
+    font-size: 0.8em;
+}
 </style>

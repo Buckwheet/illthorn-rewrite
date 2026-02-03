@@ -44,7 +44,7 @@ export interface ActiveSpell {
 export interface Highlight {
 	pattern: string;
 	color: string;
-	isRegex: boolean;
+	is_regex: boolean;
 }
 
 export interface SessionConfig {
@@ -175,11 +175,20 @@ export const useSessionStore = defineStore("session", () => {
 					if (session.highlights && session.highlights.length > 0) {
 						for (const h of session.highlights) {
 							try {
-								// Simple replacement for now.
-								// Note: Text is already HTML-escaped by parser, but we are injecting HTML spans.
-								// We must be careful not to break existing tags if parser is imperfect,
-								// but usually cleanText is just text.
-								const regex = new RegExp(h.pattern, "gi");
+								let regex: RegExp;
+								if (h.is_regex) {
+									regex = new RegExp(h.pattern, "gi");
+								} else {
+									// Escape regex characters for literal match
+									const escaped = h.pattern.replace(
+										/[.*+?^${}()|[\]\\]/g,
+										"\\$&",
+									);
+									// Use word boundaries for cleaner matches? Or just literal?
+									// User asked for "sit", assuming literal substring.
+									regex = new RegExp(escaped, "gi");
+								}
+
 								text = text.replace(
 									regex,
 									(match) => `<span style="color:${h.color}">${match}</span>`,
