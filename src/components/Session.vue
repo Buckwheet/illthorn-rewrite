@@ -14,6 +14,7 @@ import {
 	type Session,
 	useSessionStore,
 } from "../stores/session";
+import HighlightsModal from "./HighlightsModal.vue";
 import InjuryPanel from "./InjuryPanel.vue";
 
 const props = defineProps<{
@@ -51,6 +52,7 @@ const visiblePanels = reactive({
 });
 
 const autoScrollMode = ref<"smart" | "force">("smart");
+const showHighlightsModal = ref(false);
 
 const roomContainer = ref<HTMLElement | null>(null);
 const arrivalsContainer = ref<HTMLElement | null>(null);
@@ -460,8 +462,15 @@ async function dumpSpells() {
              <button @click="toggleScrollMode" :class="{ active: autoScrollMode === 'smart' }" style="margin-left:auto; border-color: #666;">
                 {{ autoScrollMode === 'smart' ? '⚓ Smart Scroll' : '⬇ Force Scroll' }}
              </button>
+             <button @click="showHighlightsModal = true" style="border-color: #666;">🖊 Highlights</button>
           </div>
        </div>
+
+       <HighlightsModal 
+          v-if="showHighlightsModal" 
+          :sessionName="session.name" 
+          @close="showHighlightsModal = false" 
+       />
 
       <div class="panel room-panel">
          <div class="panel-header" @click="toggleCollapse('room')">{{ collapsedPanels.has('room') ? '▶' : '▼' }} ROOM</div>

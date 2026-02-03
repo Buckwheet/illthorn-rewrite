@@ -10,7 +10,7 @@
         - Define `Highlight` struct (pattern, color, is_regex, sound).
         - Connect `Session` to load highlights on startup.
         - *Goal: Hardcoded highlights in JSON file appear in app.*
-    - [ ] **Step 3: Highlights Menu Logic (CRUD)** <!-- id: 5 -->
+    - [x] **Step 3: Highlights Menu Logic (CRUD)** <!-- id: 5 -->
         - Create `HighlightsModal.vue`.
         - Add List, Add, Remove functionality.
         - *Goal: User can add/remove simple highlights via UI.*
