@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { open } from "@tauri-apps/plugin-dialog";
 import { ref } from "vue";
 import { useHighlightsStore } from "../stores/highlights";
 
@@ -6,15 +7,24 @@ const props = defineProps<{
 	sessionName: string;
 }>();
 
-const emit = defineEmits<{
-	(e: "close"): void;
-}>();
+const emit = defineEmits<(e: "close") => void>();
 
 const store = useHighlightsStore();
 
 const newPattern = ref("");
 const newColor = ref("#FFFF00");
 const newIsRegex = ref(false);
+const newSoundFile = ref<string | undefined>(undefined);
+
+async function browseSound() {
+	const file = await open({
+		multiple: false,
+		filters: [{ name: "Audio", extensions: ["mp3", "wav", "ogg"] }],
+	});
+	if (file) {
+		newSoundFile.value = file as string;
+	}
+}
 
 const presetColors = [
 	"#FF0000",
@@ -39,10 +49,12 @@ function add() {
 		pattern: newPattern.value,
 		color: newColor.value,
 		is_regex: newIsRegex.value,
+		sound_file: newSoundFile.value,
 	});
 
 	// Reset form
 	newPattern.value = "";
+	newSoundFile.value = undefined;
 	// Keep color/regex as is for convenience? Or reset?
 }
 
@@ -86,6 +98,13 @@ async function saveAndClose() {
                     <label class="checkbox-label">
                         <input type="checkbox" v-model="newIsRegex" /> Regex
                     </label>
+                    <div class="sound-group">
+                        <button class="btn secondary small" @click="browseSound" :title="newSoundFile || 'No Sound'">
+                            {{ newSoundFile ? '♫ File Set' : '♫ Sound' }}
+                        </button>
+                        <button v-if="newSoundFile" class="btn danger small"
+                            @click="newSoundFile = undefined">X</button>
+                    </div>
                     <button class="btn primary small" @click="add">Add</button>
                 </div>
             </div>
@@ -290,5 +309,11 @@ h3 {
 .btn.small {
     padding: 4px 8px;
     font-size: 0.8em;
+}
+
+.sound-group {
+    display: flex;
+    gap: 4px;
+    align-items: center;
 }
 </style>

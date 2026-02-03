@@ -18,7 +18,7 @@
         - Integrate color picker to `HighlightsModal`.
         - Apply custom colors to stream parsing.
         - *Goal: User can pick any hex color.*
-    - [ ] **Step 5: Sound Triggers** <!-- id: 7 -->
+    - [x] **Step 5: Sound Triggers** <!-- id: 7 -->
         - Add ability to play sound file on match.
         - *Goal: User can assign sounds to patterns.*
     - [ ] **Step 6: Regex Support** <!-- id: 8 -->

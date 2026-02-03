@@ -1,4 +1,4 @@
-import { invoke } from "@tauri-apps/api/core";
+import { convertFileSrc, invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
@@ -45,6 +45,7 @@ export interface Highlight {
 	pattern: string;
 	color: string;
 	is_regex: boolean;
+	sound_file?: string;
 }
 
 export interface SessionConfig {
@@ -172,6 +173,8 @@ export const useSessionStore = defineStore("session", () => {
 				if (result.cleanText.trim()) {
 					// Phase 1: Highlights
 					let text = result.cleanText;
+					let soundToPlay: string | null = null;
+
 					if (session.highlights && session.highlights.length > 0) {
 						for (const h of session.highlights) {
 							try {
@@ -189,6 +192,12 @@ export const useSessionStore = defineStore("session", () => {
 									regex = new RegExp(escaped, "gi");
 								}
 
+								// Check for match to trigger sound
+								if (h.sound_file && regex.test(text)) {
+									soundToPlay = h.sound_file;
+									regex.lastIndex = 0;
+								}
+
 								text = text.replace(
 									regex,
 									(match) => `<span style="color:${h.color}">${match}</span>`,
@@ -196,6 +205,13 @@ export const useSessionStore = defineStore("session", () => {
 							} catch (e) {
 								console.error("Invalid highlight regex:", h.pattern, e);
 							}
+						}
+
+						if (soundToPlay) {
+							const url = convertFileSrc(soundToPlay);
+							new Audio(url)
+								.play()
+								.catch((e) => console.warn("Failed to play sound:", e));
 						}
 					}
 
