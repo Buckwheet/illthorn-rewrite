@@ -26,6 +26,10 @@
         - Update Modal to toggle Global vs Current Session.
         - Update `syncToSession` to filter + merge.
         - *Goal: "Sit" highlights everywhere. "Stance" highlights only on Warrior.*
+    - [x] **Step 7: Reliability & UX Fixes** <!-- id: 15 -->
+        - Prevent duplicates.
+        - Add edit functionality.
+        - Fix form layout.
 - [ ] **Feature: Macros System** (Granular Breakdown) <!-- id: 9 -->
     - [ ] Step 1: Macro Persistence (Data Layer) <!-- id: 10 -->
     - [ ] Step 2: Keybinding UI <!-- id: 11 -->

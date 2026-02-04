@@ -16,6 +16,7 @@ const newColor = ref("#FFFF00");
 const newIsRegex = ref(false);
 const newSoundFile = ref<string | undefined>(undefined);
 const isGlobal = ref(true);
+const editingId = ref<string | null>(null);
 
 async function browseSound() {
 	const file = await open({
@@ -42,28 +43,75 @@ function selectPreset(c: string) {
 	newColor.value = c;
 }
 
-function add() {
+function saveHighlight() {
 	if (!newPattern.value) return;
 
-	store.list.push({
-		id: crypto.randomUUID(),
-		pattern: newPattern.value,
-		color: newColor.value,
-		is_regex: newIsRegex.value,
-		sound_file: newSoundFile.value,
-		scope: isGlobal.value ? "global" : props.sessionName,
-	});
+	// Check for duplicates (skip current item if editing)
+	const existing = store.list.find(
+		(h) =>
+			h.pattern.toLowerCase() === newPattern.value.toLowerCase() &&
+			h.id !== editingId.value,
+	);
+	if (existing) {
+		alert("This pattern already exists!");
+		return;
+	}
 
-	// Reset form
-	newPattern.value = "";
-	newSoundFile.value = undefined;
-	// isGlobal.value = true; // reset to global preference?
-	// Keep color/regex as is for convenience? Or reset?
+	if (editingId.value) {
+		// Update existing
+		const idx = store.list.findIndex((h) => h.id === editingId.value);
+		if (idx !== -1) {
+			store.list[idx] = {
+				...store.list[idx],
+				pattern: newPattern.value,
+				color: newColor.value,
+				is_regex: newIsRegex.value,
+				sound_file: newSoundFile.value,
+				scope: isGlobal.value ? "global" : props.sessionName,
+			};
+		}
+	} else {
+		// Create new
+		store.list.push({
+			id: crypto.randomUUID(),
+			pattern: newPattern.value,
+			color: newColor.value,
+			is_regex: newIsRegex.value,
+			sound_file: newSoundFile.value,
+			scope: isGlobal.value ? "global" : props.sessionName,
+		});
+	}
+
+	resetForm();
+}
+
+function edit(id: string) {
+	const item = store.list.find((h) => h.id === id);
+	if (!item) return;
+
+	newPattern.value = item.pattern;
+	newColor.value = item.color;
+	newIsRegex.value = item.is_regex;
+	newSoundFile.value = item.sound_file;
+	isGlobal.value = !item.scope || item.scope === "global";
+	editingId.value = id;
 }
 
 function remove(id: string) {
-	const idx = store.list.findIndex((h) => h.id === id);
-	if (idx !== -1) store.list.splice(idx, 1);
+	if (confirm("Are you sure you want to delete this highlight?")) {
+		const idx = store.list.findIndex((h) => h.id === id);
+		if (idx !== -1) store.list.splice(idx, 1);
+		if (editingId.value === id) resetForm();
+	}
+}
+
+function resetForm() {
+	newPattern.value = "";
+	newColor.value = "#FFFF00";
+	newIsRegex.value = false;
+	newSoundFile.value = undefined;
+	isGlobal.value = true;
+	editingId.value = null;
 }
 
 async function saveAndClose() {
@@ -86,35 +134,49 @@ async function saveAndClose() {
                         {{ (!h.scope || h.scope === 'global') ? '🌍' : '👤' }}
                         {{ h.is_regex ? '(Regex)' : '' }}
                     </span>
-                    <button class="btn small danger" @click="remove(h.id)">X</button>
+                    <div class="row-actions">
+                        <button class="btn small secondary" @click="edit(h.id)">Edit</button>
+                        <button class="btn small danger" @click="remove(h.id)">X</button>
+                    </div>
                 </div>
             </div>
 
-            <div class="add-form">
-                <h3>Add New</h3>
+            <div class="add-form" :class="{ editing: !!editingId }">
+                <h3>{{ editingId ? 'Edit Highlight' : 'Add New' }}</h3>
                 <div class="form-row">
                     <input v-model="newPattern" placeholder="Pattern" class="input-pattern" />
-                    <div class="color-picker-group">
-                        <input v-model="newColor" type="color" class="input-color" title="Custom Color" />
-                        <div class="palette">
-                            <div v-for="c in presetColors" :key="c" class="swatch" :style="{ background: c }"
-                                @click="selectPreset(c)" :title="c"></div>
+                    
+                    <div class="options-wrapper">
+                        <div class="color-picker-group">
+                            <input v-model="newColor" type="color" class="input-color" title="Custom Color" />
+                            <div class="palette">
+                                <div v-for="c in presetColors" :key="c" class="swatch" :style="{ background: c }"
+                                    @click="selectPreset(c)" :title="c"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="toggles">
+                            <label class="checkbox-label">
+                                <input type="checkbox" v-model="isGlobal" /> Global
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" v-model="newIsRegex" /> Regex
+                            </label>
+                        </div>
+
+                        <div class="sound-group">
+                            <button class="btn secondary small" @click="browseSound" :title="newSoundFile || 'No Sound'">
+                                {{ newSoundFile ? '♫ File Set' : '♫ Sound' }}
+                            </button>
+                            <button v-if="newSoundFile" class="btn danger small"
+                                @click="newSoundFile = undefined">X</button>
+                        </div>
+
+                        <div class="form-actions">
+                             <button v-if="editingId" class="btn secondary small" @click="resetForm">Cancel</button>
+                             <button class="btn primary small" @click="saveHighlight">{{ editingId ? 'Update' : 'Add' }}</button>
                         </div>
                     </div>
-                    <label class="checkbox-label">
-                        <input type="checkbox" v-model="isGlobal" /> Global
-                    </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" v-model="newIsRegex" /> Regex
-                    </label>
-                    <div class="sound-group">
-                        <button class="btn secondary small" @click="browseSound" :title="newSoundFile || 'No Sound'">
-                            {{ newSoundFile ? '♫ File Set' : '♫ Sound' }}
-                        </button>
-                        <button v-if="newSoundFile" class="btn danger small"
-                            @click="newSoundFile = undefined">X</button>
-                    </div>
-                    <button class="btn primary small" @click="add">Add</button>
                 </div>
             </div>
 
@@ -138,7 +200,6 @@ async function saveAndClose() {
     justify-content: center;
     align-items: center;
     z-index: 2000;
-    /* Higher than connection modal? */
 }
 
 .modal-content {
@@ -146,13 +207,13 @@ async function saveAndClose() {
     border: 1px solid #333;
     padding: 20px;
     border-radius: 8px;
-    width: 500px;
-    max-width: 90vw;
+    width: 600px; /* Slightly wider */
+    max-width: 95vw;
     color: #eee;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
     display: flex;
     flex-direction: column;
-    max-height: 80vh;
+    max-height: 85vh;
 }
 
 h2 {
@@ -200,45 +261,57 @@ h3 {
 .preview {
     flex: 1;
     font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-right: 10px;
 }
 
 .meta {
     font-size: 0.8em;
     color: #666;
     margin-right: 10px;
+    white-space: nowrap;
+}
+
+.row-actions {
+    display: flex;
+    gap: 5px;
 }
 
 .add-form {
     background: #222;
     padding: 10px;
     border-radius: 4px;
+    border: 1px solid transparent;
+}
+
+.add-form.editing {
+    border-color: #00bc8c;
+    background: #2a2a2a;
 }
 
 .form-row {
     display: flex;
-    gap: 8px;
-    align-items: center;
-    margin-bottom: 8px;
-}
-
-.form-row:last-child {
-    margin-bottom: 0;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .input-pattern {
-    flex: 1;
-    padding: 5px;
+    width: 100%;
+    padding: 8px;
     background: #000;
     border: 1px solid #444;
     color: white;
+    box-sizing: border-box; /* Ensure padding doesn't affect width */
 }
 
-.options-row {
-    justify-content: flex-start;
-}
-
-.spacer {
-    flex: 1;
+.options-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .color-picker-group {
@@ -278,6 +351,10 @@ h3 {
     cursor: pointer;
 }
 
+.toggles {
+    display: flex;
+    gap: 10px;
+}
 
 .checkbox-label {
     font-size: 0.8em;
@@ -285,6 +362,19 @@ h3 {
     align-items: center;
     gap: 4px;
     color: #ccc;
+    cursor: pointer;
+}
+
+.sound-group {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.form-actions {
+    display: flex;
+    gap: 5px;
+    margin-left: auto; /* Push to right */
 }
 
 .actions {
@@ -332,11 +422,5 @@ h3 {
 .btn.small {
     padding: 4px 8px;
     font-size: 0.8em;
-}
-
-.sound-group {
-    display: flex;
-    gap: 4px;
-    align-items: center;
 }
 </style>
